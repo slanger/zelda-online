@@ -55,15 +55,16 @@ namespace Lozo
 			this.linkX = 256;
 			this.linkY = 256;
 			this.direction = Direction.Down;
-			this.leftTextures = new[] { new Rectangle(35, 11, LinkWidth, LinkHeight), new Rectangle(52, 11, LinkWidth, LinkWidth) }; // TODO: Create left textures
+			// The coordinates for the left textures are very different from the other coordinates
+			// because the original sprite sheet did not have left textures, so I added them in a
+			// different spot.
+			this.leftTextures = new[] { new Rectangle(297, 224, LinkWidth, LinkHeight), new Rectangle(314, 224, LinkWidth, LinkWidth) };
 			this.rightTextures = new[] { new Rectangle(35, 11, LinkWidth, LinkHeight), new Rectangle(52, 11, LinkWidth, LinkWidth) };
 			this.upTextures = new[] { new Rectangle(69, 11, LinkWidth, LinkHeight), new Rectangle(86, 11, LinkWidth, LinkWidth) };
 			this.downTextures = new[] { new Rectangle(1, 11, LinkWidth, LinkHeight), new Rectangle(18, 11, LinkWidth, LinkWidth) };
 			this.curTextures = this.downTextures;
 			this.curTextureIndex = 0;
 			this.numAnimationFrames = 0;
-			System.Console.WriteLine("Viewport bounds: " + GraphicsDevice.Viewport.Bounds);
-			System.Console.WriteLine("Screen size: " + ScreenWidth + ", " + ScreenHeight);
 			base.Initialize();
 		}
 
@@ -114,7 +115,6 @@ namespace Lozo
 			}
 			if (this.linkX != oldX || this.linkY != oldY)
 			{
-				System.Console.WriteLine(this.linkX + ", " + this.linkY);
 				this.numAnimationFrames++;
 				if (this.numAnimationFrames >= AnimationSpeed)
 				{
