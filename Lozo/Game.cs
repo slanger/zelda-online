@@ -4,12 +4,13 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Lozo
 {
-    public class Game1 : Game
+    public class LozoGame : Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+		Sprite link;
 
-        public Game1()
+		public LozoGame()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -26,9 +27,8 @@ namespace Lozo
         protected override void LoadContent()
         {
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
-        }
+			link = new Sprite(Content.Load<Texture2D>("link"), 1.0f);
+		}
 
         protected override void Update(GameTime gameTime)
         {
