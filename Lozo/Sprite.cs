@@ -69,8 +69,16 @@ namespace Lozo
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			Vector2 spritePosition = new Vector2(this.x, this.y);
-			spriteBatch.Draw(texture, spritePosition, null, Color.White, this.angle, new Vector2(texture.Width / 2, texture.Height / 2), new Vector2(scale, scale), SpriteEffects.None, 0f);
+			spriteBatch.Draw(
+				this.texture,
+				new Vector2(this.x, this.y),
+				null,
+				Color.White,
+				this.angle,
+				new Vector2(texture.Width / 2, texture.Height / 2),
+				new Vector2(scale, scale),
+				SpriteEffects.None,
+				0f);
 		}
 
 		public bool RectangleCollision(Sprite otherSprite)
