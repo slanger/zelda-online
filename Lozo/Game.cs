@@ -29,6 +29,8 @@ namespace Lozo
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 		Texture2D linkSpritesheet;
+		SpriteFont debugFont;
+		double framerate;
 		int linkX;
 		int linkY;
 		Direction direction;
@@ -72,10 +74,13 @@ namespace Lozo
 		{
 			this.spriteBatch = new SpriteBatch(GraphicsDevice);
 			this.linkSpritesheet = Content.Load<Texture2D>("link"); // TODO: Use Sprite class
+			this.debugFont = Content.Load<SpriteFont>("Debug");
 		}
 
 		protected override void Update(GameTime gameTime)
 		{
+			this.framerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
+
 			KeyboardState state = Keyboard.GetState(); // TODO: GamePad support
 			if (state.IsKeyDown(Keys.Escape)) Exit();
 
@@ -132,9 +137,34 @@ namespace Lozo
 
 		protected override void Draw(GameTime gameTime)
 		{
+			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
+
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-			this.spriteBatch.Draw(this.linkSpritesheet, new Vector2(this.linkX, this.linkY), this.curTextures[this.curTextureIndex], Color.White, 0.0f, new Vector2(LinkWidth / 2, LinkHeight / 2), Scale, SpriteEffects.None, 0.0f);
+
+			this.spriteBatch.Draw(
+				this.linkSpritesheet,
+				new Vector2(this.linkX, this.linkY),
+				this.curTextures[this.curTextureIndex],
+				Color.White,
+				0.0f,
+				new Vector2(LinkWidth / 2, LinkHeight / 2),
+				Scale,
+				SpriteEffects.None,
+				0.0f);
+
+			// HUD
+			spriteBatch.DrawString(
+				this.debugFont,
+				string.Format("FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
+				new Vector2(5, 5),
+				Color.White,
+				0,
+				new Vector2(),
+				1.0f,
+				SpriteEffects.None,
+				0.5f);
+
 			this.spriteBatch.End();
 			base.Draw(gameTime);
 		}
