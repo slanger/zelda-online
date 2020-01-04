@@ -20,7 +20,7 @@
 /processorParam:TextureFormat=Compressed
 /build:Debug.spritefont
 
-#begin link.png
+#begin Link.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=116,116,116,255
@@ -30,5 +30,5 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:link.png
+/build:Link.png
 

@@ -73,7 +73,7 @@ namespace Lozo
 		protected override void LoadContent()
 		{
 			this.spriteBatch = new SpriteBatch(GraphicsDevice);
-			this.linkSpritesheet = Content.Load<Texture2D>("link"); // TODO: Use Sprite class
+			this.linkSpritesheet = Content.Load<Texture2D>("Link"); // TODO: Use Sprite class
 			this.debugFont = Content.Load<SpriteFont>("Debug");
 		}
 
