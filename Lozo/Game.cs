@@ -29,11 +29,16 @@ namespace Lozo
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 		Texture2D linkSpritesheet;
+		Texture2D debugRect;
 		SpriteFont debugFont;
 		double framerate;
 		int linkX;
 		int linkY;
 		Direction direction;
+		bool leftPressed;
+		bool rightPressed;
+		bool upPressed;
+		bool downPressed;
 		Rectangle[] leftTextures;
 		Rectangle[] rightTextures;
 		Rectangle[] upTextures;
@@ -75,6 +80,15 @@ namespace Lozo
 			this.spriteBatch = new SpriteBatch(GraphicsDevice);
 			this.linkSpritesheet = Content.Load<Texture2D>("Link"); // TODO: Use Sprite class
 			this.debugFont = Content.Load<SpriteFont>("Debug");
+			this.debugRect = new Texture2D(GraphicsDevice, 1, 1);
+			this.debugRect.SetData(new[] { Color.White });
+		}
+
+		protected override void UnloadContent()
+		{
+			base.UnloadContent();
+			this.spriteBatch.Dispose();
+			this.debugRect.Dispose();
 		}
 
 		protected override void Update(GameTime gameTime)
@@ -87,26 +101,34 @@ namespace Lozo
 			int oldX = this.linkX;
 			int oldY = this.linkY;
 			Direction oldDirection = this.direction;
+			this.leftPressed = false;
+			this.rightPressed = false;
+			this.upPressed = false;
+			this.downPressed = false;
 			if (state.IsKeyDown(Keys.Left))
 			{
+				this.leftPressed = true;
 				this.linkX -= Speed;
 				this.direction = Direction.Left;
 				this.curTextures = this.leftTextures;
 			}
 			if (state.IsKeyDown(Keys.Right))
 			{
+				this.rightPressed = true;
 				this.linkX += Speed;
 				this.direction = Direction.Right;
 				this.curTextures = this.rightTextures;
 			}
 			if (state.IsKeyDown(Keys.Up))
 			{
+				this.upPressed = true;
 				this.linkY -= Speed;
 				this.direction = Direction.Up;
 				this.curTextures = this.upTextures;
 			}
 			if (state.IsKeyDown(Keys.Down))
 			{
+				this.downPressed = true;
 				this.linkY += Speed;
 				this.direction = Direction.Down;
 				this.curTextures = this.downTextures;
@@ -154,7 +176,38 @@ namespace Lozo
 				0.0f);
 
 			// HUD
-			spriteBatch.DrawString(
+			// Controller buttons
+			if (this.upPressed)
+			{
+				this.spriteBatch.Draw(
+					this.debugRect,
+					new Rectangle(ScreenWidth - 50, 5, 20, 20),
+					new Color(Color.Red, 0.1f));
+			}
+			if (this.leftPressed)
+			{
+				this.spriteBatch.Draw(
+					this.debugRect,
+					new Rectangle(ScreenWidth - 75, 30, 20, 20),
+					new Color(Color.Red, 0.1f));
+			}
+			if (this.downPressed)
+			{
+				this.spriteBatch.Draw(
+					this.debugRect,
+					new Rectangle(ScreenWidth - 50, 30, 20, 20),
+					new Color(Color.Red, 0.1f));
+			}
+			if (this.rightPressed)
+			{
+				this.spriteBatch.Draw(
+					this.debugRect,
+					new Rectangle(ScreenWidth - 25, 30, 20, 20),
+					new Color(Color.Red, 0.1f));
+			}
+
+			// Frame rate
+			this.spriteBatch.DrawString(
 				this.debugFont,
 				string.Format("FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
 				new Vector2(5, 5),
