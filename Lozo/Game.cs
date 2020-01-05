@@ -6,46 +6,21 @@ namespace Lozo
 {
 	public class LozoGame : Game
 	{
-		const int Scale = 3;
-		const int NumTilesWidth = 16;
-		const int NumTilesHeight = 11;
-		const int TileWidth = 16;
-		const int TileHeight = 16;
-		const int ScreenWidth = NumTilesWidth * TileWidth * Scale;
-		const int ScreenHeight = NumTilesHeight * TileHeight * Scale;
-		const int Speed = 4;
-		const int LinkWidth = 16;
-		const int LinkHeight = 16;
-		const int AnimationSpeed = 6; // frames per animation key frame
-
-		enum Direction
-		{
-			Left,
-			Right,
-			Up,
-			Down
-		}
+		public const int Scale = 3;
+		public const int NumTilesWidth = 16;
+		public const int NumTilesHeight = 11;
+		public const int TileWidth = 16;
+		public const int TileHeight = 16;
+		public const int ScreenWidth = NumTilesWidth * TileWidth * Scale;
+		public const int ScreenHeight = NumTilesHeight * TileHeight * Scale;
 
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
-		Texture2D linkSpritesheet;
 		Texture2D debugRect;
 		SpriteFont debugFont;
 		double framerate;
-		int linkX;
-		int linkY;
-		Direction direction;
-		bool leftPressed;
-		bool rightPressed;
-		bool upPressed;
-		bool downPressed;
-		Rectangle[] leftTextures;
-		Rectangle[] rightTextures;
-		Rectangle[] upTextures;
-		Rectangle[] downTextures;
-		Rectangle[] curTextures;
-		int curTextureIndex;
-		int numAnimationFrames;
+		Player player;
+		KeyboardState state;
 
 		public LozoGame()
 		{
@@ -59,26 +34,15 @@ namespace Lozo
 
 		protected override void Initialize()
 		{
-			this.linkX = 256;
-			this.linkY = 256;
-			this.direction = Direction.Down;
-			// The coordinates for the left textures are very different from the other coordinates
-			// because the original sprite sheet did not have left textures, so I added them in a
-			// different spot.
-			this.leftTextures = new[] { new Rectangle(297, 224, LinkWidth, LinkHeight), new Rectangle(314, 224, LinkWidth, LinkWidth) };
-			this.rightTextures = new[] { new Rectangle(35, 11, LinkWidth, LinkHeight), new Rectangle(52, 11, LinkWidth, LinkWidth) };
-			this.upTextures = new[] { new Rectangle(69, 11, LinkWidth, LinkHeight), new Rectangle(86, 11, LinkWidth, LinkWidth) };
-			this.downTextures = new[] { new Rectangle(1, 11, LinkWidth, LinkHeight), new Rectangle(18, 11, LinkWidth, LinkWidth) };
-			this.curTextures = this.downTextures;
-			this.curTextureIndex = 0;
-			this.numAnimationFrames = 0;
+			this.player = new Player();
 			base.Initialize();
 		}
 
 		protected override void LoadContent()
 		{
 			this.spriteBatch = new SpriteBatch(GraphicsDevice);
-			this.linkSpritesheet = Content.Load<Texture2D>("Link"); // TODO: Use Sprite class
+			Texture2D spritesheet = Content.Load<Texture2D>("Link"); // TODO: Use Sprite class
+			this.player.AddSpriteSheet(spritesheet);
 			this.debugFont = Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });
@@ -95,65 +59,10 @@ namespace Lozo
 		{
 			this.framerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
 
-			KeyboardState state = Keyboard.GetState(); // TODO: GamePad support
-			if (state.IsKeyDown(Keys.Escape)) Exit();
+			this.state = Keyboard.GetState(); // TODO: GamePad support
+			if (this.state.IsKeyDown(Keys.Escape)) Exit();
 
-			int oldX = this.linkX;
-			int oldY = this.linkY;
-			Direction oldDirection = this.direction;
-			this.leftPressed = false;
-			this.rightPressed = false;
-			this.upPressed = false;
-			this.downPressed = false;
-			if (state.IsKeyDown(Keys.Left))
-			{
-				this.leftPressed = true;
-				this.linkX -= Speed;
-				this.direction = Direction.Left;
-				this.curTextures = this.leftTextures;
-			}
-			if (state.IsKeyDown(Keys.Right))
-			{
-				this.rightPressed = true;
-				this.linkX += Speed;
-				this.direction = Direction.Right;
-				this.curTextures = this.rightTextures;
-			}
-			if (state.IsKeyDown(Keys.Up))
-			{
-				this.upPressed = true;
-				this.linkY -= Speed;
-				this.direction = Direction.Up;
-				this.curTextures = this.upTextures;
-			}
-			if (state.IsKeyDown(Keys.Down))
-			{
-				this.downPressed = true;
-				this.linkY += Speed;
-				this.direction = Direction.Down;
-				this.curTextures = this.downTextures;
-			}
-			this.linkX = MathHelper.Clamp(this.linkX, (LinkWidth / 2) * Scale, ScreenWidth - ((LinkWidth / 2) * Scale));
-			this.linkY = MathHelper.Clamp(this.linkY, (LinkHeight / 2) * Scale, ScreenHeight - ((LinkHeight / 2) * Scale));
-			if (this.direction != oldDirection)
-			{
-				this.curTextureIndex = 0;
-				this.numAnimationFrames = 0;
-			}
-			if (this.linkX != oldX || this.linkY != oldY)
-			{
-				this.numAnimationFrames++;
-				if (this.numAnimationFrames >= AnimationSpeed)
-				{
-					this.numAnimationFrames = 0;
-					this.curTextureIndex++;
-					if (this.curTextureIndex >= this.curTextures.Length)
-					{
-						this.curTextureIndex = 0;
-					}
-				}
-			}
-
+			this.player.Update(this.state);
 			base.Update(gameTime);
 		}
 
@@ -164,41 +73,32 @@ namespace Lozo
 			GraphicsDevice.Clear(Color.CornflowerBlue);
 			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-			this.spriteBatch.Draw(
-				this.linkSpritesheet,
-				new Vector2(this.linkX, this.linkY),
-				this.curTextures[this.curTextureIndex],
-				Color.White,
-				0.0f,
-				new Vector2(LinkWidth / 2, LinkHeight / 2),
-				Scale,
-				SpriteEffects.None,
-				0.0f);
+			this.player.Draw(this.spriteBatch);
 
 			// HUD
 			// Controller buttons
-			if (this.upPressed)
+			if (this.state.IsKeyDown(Keys.Up))
 			{
 				this.spriteBatch.Draw(
 					this.debugRect,
 					new Rectangle(ScreenWidth - 50, 5, 20, 20),
 					new Color(Color.Red, 0.1f));
 			}
-			if (this.leftPressed)
+			if (this.state.IsKeyDown(Keys.Left))
 			{
 				this.spriteBatch.Draw(
 					this.debugRect,
 					new Rectangle(ScreenWidth - 75, 30, 20, 20),
 					new Color(Color.Red, 0.1f));
 			}
-			if (this.downPressed)
+			if (this.state.IsKeyDown(Keys.Down))
 			{
 				this.spriteBatch.Draw(
 					this.debugRect,
 					new Rectangle(ScreenWidth - 50, 30, 20, 20),
 					new Color(Color.Red, 0.1f));
 			}
-			if (this.rightPressed)
+			if (this.state.IsKeyDown(Keys.Right))
 			{
 				this.spriteBatch.Draw(
 					this.debugRect,
