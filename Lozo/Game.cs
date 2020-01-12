@@ -70,7 +70,7 @@ namespace Lozo
 		{
 			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
 
-			GraphicsDevice.Clear(Color.CornflowerBlue);
+			GraphicsDevice.Clear(new Color(252, 216, 168));
 			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
 			this.player.Draw(this.spriteBatch);
