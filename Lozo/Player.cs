@@ -18,7 +18,7 @@ namespace Lozo
 		int dX;
 		int dY;
 		Direction direction;
-		bool moving;
+		bool attemptedMoving;
 		Rectangle[] leftTextures;
 		Rectangle[] rightTextures;
 		Rectangle[] upTextures;
@@ -58,22 +58,18 @@ namespace Lozo
 					break;
 				case Direction.Left:
 					this.x -= Speed;
-					this.direction = Direction.Left;
 					this.curTextures = this.leftTextures;
 					break;
 				case Direction.Right:
 					this.x += Speed;
-					this.direction = Direction.Right;
 					this.curTextures = this.rightTextures;
 					break;
 				case Direction.Up:
 					this.y -= Speed;
-					this.direction = Direction.Up;
 					this.curTextures = this.upTextures;
 					break;
 				case Direction.Down:
 					this.y += Speed;
-					this.direction = Direction.Down;
 					this.curTextures = this.downTextures;
 					break;
 			}
@@ -84,10 +80,8 @@ namespace Lozo
 				this.curTextureIndex = 0;
 				this.numAnimationFrames = 0;
 			}
-			this.moving = false;
 			if (this.x != oldX || this.y != oldY)
 			{
-				this.moving = true;
 				this.numAnimationFrames++;
 				if (this.numAnimationFrames >= AnimationSpeed)
 				{
@@ -120,9 +114,10 @@ namespace Lozo
 			List<Direction> directions = new List<Direction>(4);
 			int oldDX = this.dX;
 			int oldDY = this.dY;
-			Direction oldDirection = this.direction;
+			bool oldAttemptedMoving = this.attemptedMoving;
 			this.dX = 0;
 			this.dY = 0;
+			this.attemptedMoving = false;
 			if (state.IsKeyDown(Keys.Left)) { directions.Add(Direction.Left); --this.dX; }
 			if (state.IsKeyDown(Keys.Right)) { directions.Add(Direction.Right); ++this.dX; }
 			if (state.IsKeyDown(Keys.Up)) { directions.Add(Direction.Up); --this.dY; }
@@ -130,29 +125,36 @@ namespace Lozo
 
 			if (directions.Count == 1)
 			{
-				return directions[0];
+				this.attemptedMoving = true;
+				this.direction = directions[0];
+				return this.direction;
 			}
 			if (directions.Count == 2)
 			{
-				if (this.moving)
+				if (oldAttemptedMoving)
 				{
 					if (this.dX == oldDX && this.dY == oldDY)
 					{
 						// If the buttons pressed are the same as last update, then keep moving in
 						// the same direction.
-						return oldDirection;
+						this.attemptedMoving = true;
+						return this.direction;
 					}
 					if (this.dX == 0 || this.dY == 0)
 					{
 						return null;
 					}
+
+					this.attemptedMoving = true;
 					if (this.dX == oldDX)
 					{
-						return (this.dY == 1) ? Direction.Down : Direction.Up;
+						this.direction = (this.dY == 1) ? Direction.Down : Direction.Up;
+						return this.direction;
 					}
 					else /* this.dY == oldDY */
 					{
-						return (this.dX == 1) ? Direction.Right : Direction.Left;
+						this.direction = (this.dX == 1) ? Direction.Right : Direction.Left;
+						return this.direction;
 					}
 				}
 				else
@@ -163,7 +165,9 @@ namespace Lozo
 					// prioritized the left and right directions over the up and down directions.
 					if (this.dX != 0)
 					{
-						return (this.dX == 1) ? Direction.Right : Direction.Left;
+						this.attemptedMoving = true;
+						this.direction = (this.dX == 1) ? Direction.Right : Direction.Left;
+						return this.direction;
 					}
 					return null; // dX == 0 && dY == 0
 				}
@@ -172,13 +176,16 @@ namespace Lozo
 			{
 				// If 3 buttons are pressed, that means that 2 buttons cancel each other out,
 				// leaving one button left to determine the movement direction.
+				this.attemptedMoving = true;
 				if (this.dX == 0)
 				{
-					return (this.dY == 1) ? Direction.Down : Direction.Up;
+					this.direction = (this.dY == 1) ? Direction.Down : Direction.Up;
+					return this.direction;
 				}
 				else /* dY == 0 */
 				{
-					return (this.dX == 1) ? Direction.Right : Direction.Left;
+					this.direction = (this.dX == 1) ? Direction.Right : Direction.Left;
+					return this.direction;
 				}
 			}
 			// If no buttons are pressed, then we're not moving.
