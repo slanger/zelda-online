@@ -32,10 +32,10 @@ namespace Lozo
 			this.x = 256;
 			this.y = 256;
 			this.direction = Direction.Down;
-			// The coordinates for the left textures are very different from the other coordinates
-			// because the original sprite sheet did not have left textures, so I added them in a
-			// different spot.
-			this.leftTextures = new[] { new Rectangle(297, 224, Width, Height), new Rectangle(314, 224, Width, Width) };
+			// The left and right textures are the same. In the Draw() call, we flip the sprites
+			// horizontally if the player is facing left.
+			// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
+			this.leftTextures = new[] { new Rectangle(35, 11, Width, Height), new Rectangle(52, 11, Width, Width) };
 			this.rightTextures = new[] { new Rectangle(35, 11, Width, Height), new Rectangle(52, 11, Width, Width) };
 			this.upTextures = new[] { new Rectangle(69, 11, Width, Height), new Rectangle(86, 11, Width, Width) };
 			this.downTextures = new[] { new Rectangle(1, 11, Width, Height), new Rectangle(18, 11, Width, Width) };
@@ -105,7 +105,7 @@ namespace Lozo
 				0.0f,
 				new Vector2(Width / 2, Height / 2),
 				LozoGame.Scale,
-				SpriteEffects.None,
+				(this.direction == Direction.Left) ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
 				0.0f);
 		}
 
