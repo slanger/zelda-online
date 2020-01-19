@@ -9,10 +9,10 @@ namespace Lozo
 		public const int Scale = 3;
 		public const int NumTilesWidth = 16;
 		public const int NumTilesHeight = 11;
-		public const int TileWidth = 16;
-		public const int TileHeight = 16;
-		public const int ScreenWidth = NumTilesWidth * TileWidth * Scale;
-		public const int ScreenHeight = NumTilesHeight * TileHeight * Scale;
+		public const int TileWidth = 16 * Scale;
+		public const int TileHeight = 16 * Scale;
+		public const int ScreenWidth = NumTilesWidth * TileWidth;
+		public const int ScreenHeight = NumTilesHeight * TileHeight;
 
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
