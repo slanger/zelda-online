@@ -75,35 +75,33 @@ namespace Lozo
 			this.world.Draw(this.spriteBatch);
 
 			// HUD
+			// Map lines
+			for (int x = 0; x < World.Width; x += World.TileWidth)
+			{
+				this.spriteBatch.Draw(this.debugRect, new Rectangle(x, 0, 1, World.Height), new Color(Color.Gray, 0.5f));
+			}
+			for (int y = 0; y < World.Height; y += World.TileHeight)
+			{
+				this.spriteBatch.Draw(this.debugRect, new Rectangle(0, y, World.Width, 1), new Color(Color.Gray, 0.5f));
+			}
+
 			// Controller buttons
-			if (this.state.IsKeyDown(Keys.Up))
-			{
-				this.spriteBatch.Draw(
-					this.debugRect,
-					new Rectangle(ScreenWidth - 50, 5, 20, 20),
-					new Color(Color.Red, 0.1f));
-			}
-			if (this.state.IsKeyDown(Keys.Left))
-			{
-				this.spriteBatch.Draw(
-					this.debugRect,
-					new Rectangle(ScreenWidth - 75, 30, 20, 20),
-					new Color(Color.Red, 0.1f));
-			}
-			if (this.state.IsKeyDown(Keys.Down))
-			{
-				this.spriteBatch.Draw(
-					this.debugRect,
-					new Rectangle(ScreenWidth - 50, 30, 20, 20),
-					new Color(Color.Red, 0.1f));
-			}
-			if (this.state.IsKeyDown(Keys.Right))
-			{
-				this.spriteBatch.Draw(
-					this.debugRect,
-					new Rectangle(ScreenWidth - 25, 30, 20, 20),
-					new Color(Color.Red, 0.1f));
-			}
+			this.spriteBatch.Draw(
+				this.debugRect,
+				new Rectangle(ScreenWidth - 50, 5, 20, 20),
+				new Color(Color.Gray, this.state.IsKeyDown(Keys.Up) ? 0.1f : 0.5f));
+			this.spriteBatch.Draw(
+				this.debugRect,
+				new Rectangle(ScreenWidth - 75, 30, 20, 20),
+				new Color(Color.Gray, this.state.IsKeyDown(Keys.Left) ? 0.1f : 0.5f));
+			this.spriteBatch.Draw(
+				this.debugRect,
+				new Rectangle(ScreenWidth - 50, 30, 20, 20),
+				new Color(Color.Gray, this.state.IsKeyDown(Keys.Down) ? 0.1f : 0.5f));
+			this.spriteBatch.Draw(
+				this.debugRect,
+				new Rectangle(ScreenWidth - 25, 30, 20, 20),
+				new Color(Color.Gray, this.state.IsKeyDown(Keys.Right) ? 0.1f : 0.5f));
 
 			// Frame rate
 			this.spriteBatch.DrawString(
