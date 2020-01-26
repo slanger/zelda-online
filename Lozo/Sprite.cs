@@ -3,91 +3,29 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Lozo
 {
-	class Sprite
+	public class Sprite
 	{
-		const float HITBOXSCALE = .5f;
+		public Texture2D SpriteSheet { get; }
+		public Rectangle Source { get; }
 
-		public Texture2D texture
+		public Sprite(Texture2D spritesheet, Rectangle source)
 		{
-			get;
+			this.SpriteSheet = spritesheet;
+			this.Source = source;
 		}
 
-		public float x
-		{
-			get;
-			set;
-		}
-
-		public float y
-		{
-			get;
-			set;
-		}
-
-		public float angle
-		{
-			get;
-			set;
-		}
-
-		public float dX
-		{
-			get;
-			set;
-		}
-
-		public float dY
-		{
-			get;
-			set;
-		}
-
-		public float dA
-		{
-			get;
-			set;
-		}
-
-		public float scale
-		{
-			get;
-			set;
-		}
-
-		public Sprite(Texture2D texture, float scale)
-		{
-			this.texture = texture;
-			this.scale = scale;
-		}
-
-		public void Update(float elapsedTime)
-		{
-			this.x += this.dX * elapsedTime;
-			this.y += this.dY * elapsedTime;
-			this.angle += this.dA * elapsedTime;
-		}
-
-		public void Draw(SpriteBatch spriteBatch)
+		public void Draw(SpriteBatch spriteBatch, int x, int y, int originX = 0, int originY = 0, SpriteEffects effects = SpriteEffects.None)
 		{
 			spriteBatch.Draw(
-				this.texture,
-				new Vector2(this.x, this.y),
-				null,
+				this.SpriteSheet,
+				new Vector2(x, y),
+				this.Source,
 				Color.White,
-				this.angle,
-				new Vector2(texture.Width / 2, texture.Height / 2),
-				new Vector2(scale, scale),
-				SpriteEffects.None,
+				0f,
+				new Vector2(originX, originY),
+				World.Scale,
+				effects,
 				0f);
-		}
-
-		public bool RectangleCollision(Sprite otherSprite)
-		{
-			if (this.x + this.texture.Width * this.scale * HITBOXSCALE / 2 < otherSprite.x - otherSprite.texture.Width * otherSprite.scale / 2) return false;
-			if (this.y + this.texture.Height * this.scale * HITBOXSCALE / 2 < otherSprite.y - otherSprite.texture.Height * otherSprite.scale / 2) return false;
-			if (this.x - this.texture.Width * this.scale * HITBOXSCALE / 2 > otherSprite.x + otherSprite.texture.Width * otherSprite.scale / 2) return false;
-			if (this.y - this.texture.Height * this.scale * HITBOXSCALE / 2 > otherSprite.y + otherSprite.texture.Height * otherSprite.scale / 2) return false;
-			return true;
 		}
 	}
 }

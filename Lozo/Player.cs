@@ -9,52 +9,50 @@ namespace Lozo
 	{
 		const int SpriteWidth = 16;
 		const int SpriteHeight = 16;
-		const int Width = SpriteWidth * LozoGame.Scale;
-		const int Height = SpriteHeight * LozoGame.Scale;
+		const int Width = SpriteWidth * World.Scale;
+		const int Height = SpriteHeight * World.Scale;
 		const int WalkSpeed = 4; // Based on Scale = 3
 		const int WalkAnimationSpeed = 6; // Frames per animation key frame
 
-		Texture2D spritesheet;
-		int x;
-		int y;
+		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
+
+		World world;
+		Rectangle collider;
 		int dX;
 		int dY;
 		Direction direction;
 		bool attemptedMoving;
 		bool attacking;
 		bool attackButtonPressed;
-		Rectangle[] rightTextures;
-		Rectangle[] upTextures;
-		Rectangle[] downTextures;
-		Rectangle[] attackRightTextures;
-		Rectangle[] attackUpTextures;
-		Rectangle[] attackDownTextures;
-		int[] attackFramesPerKeyFrame;
-		Rectangle[] curTextures;
-		int curTextureIndex;
+		Sprite[] walkingRightSprites;
+		Sprite[] walkingUpSprites;
+		Sprite[] walkingDownSprites;
+		Sprite[] attackingRightSprites;
+		Sprite[] attackingUpSprites;
+		Sprite[] attackingDownSprites;
+		Sprite[] currentSprites;
+		int currentSpriteIndex;
 		int numAnimationFrames;
 
-		public Player()
+		public Player(World world)
 		{
-			this.x = LozoGame.ScreenWidth / 2;
-			this.y = LozoGame.ScreenHeight / 2;
+			this.world = world;
+			this.collider = new Rectangle((World.Width / 2) - (Width / 2), (World.Height / 2) - (Height / 2), Width, Height);
 			this.direction = Direction.Down;
-			// When facing left, we use the right textures, but in the Draw() call, we flip the
-			// sprites horizontally.
-			// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
-			this.rightTextures = new[] { new Rectangle(35, 11, SpriteWidth, SpriteHeight), new Rectangle(52, 11, SpriteWidth, SpriteHeight) };
-			this.upTextures = new[] { new Rectangle(69, 11, SpriteWidth, SpriteHeight), new Rectangle(86, 11, SpriteWidth, SpriteHeight) };
-			this.downTextures = new[] { new Rectangle(1, 11, SpriteWidth, SpriteHeight), new Rectangle(18, 11, SpriteWidth, SpriteHeight) };
-			this.attackRightTextures = new[] { new Rectangle(1, 77, SpriteWidth, SpriteHeight), new Rectangle(18, 77, 27, SpriteHeight), new Rectangle(46, 77, 23, SpriteHeight), new Rectangle(70, 77, 19, SpriteHeight) };
-			this.attackUpTextures = new[] { new Rectangle(1, 109, SpriteWidth, SpriteHeight), new Rectangle(18, 97, SpriteWidth, 28), new Rectangle(35, 98, SpriteWidth, 27), new Rectangle(52, 106, SpriteWidth, 19) };
-			this.attackDownTextures = new[] { new Rectangle(1, 47, SpriteWidth, SpriteHeight), new Rectangle(18, 47, SpriteWidth, 27), new Rectangle(35, 47, SpriteWidth, 23), new Rectangle(52, 47, SpriteWidth, 19) };
-			this.attackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
-			this.curTextures = this.downTextures;
 		}
 
 		public void AddSpriteSheet(Texture2D spritesheet)
 		{
-			this.spritesheet = spritesheet;
+			// When facing left, we use the right textures, but in the Draw() call, we flip the
+			// sprites horizontally.
+			// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
+			this.walkingRightSprites = new[] { new Sprite(spritesheet, new Rectangle(35, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(52, 11, SpriteWidth, SpriteHeight)) };
+			this.walkingUpSprites = new[] { new Sprite(spritesheet, new Rectangle(69, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(86, 11, SpriteWidth, SpriteHeight)) };
+			this.walkingDownSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 11, SpriteWidth, SpriteHeight)) };
+			this.attackingRightSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 77, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 77, 27, SpriteHeight)), new Sprite(spritesheet, new Rectangle(46, 77, 23, SpriteHeight)), new Sprite(spritesheet, new Rectangle(70, 77, 19, SpriteHeight)) };
+			this.attackingUpSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 109, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 97, SpriteWidth, 28)), new Sprite(spritesheet, new Rectangle(35, 98, SpriteWidth, 27)), new Sprite(spritesheet, new Rectangle(52, 106, SpriteWidth, 19)) };
+			this.attackingDownSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 47, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 47, SpriteWidth, 27)), new Sprite(spritesheet, new Rectangle(35, 47, SpriteWidth, 23)), new Sprite(spritesheet, new Rectangle(52, 47, SpriteWidth, 19)) };
+			this.currentSprites = this.walkingDownSprites;
 		}
 
 		public void Update(KeyboardState state)
@@ -62,26 +60,26 @@ namespace Lozo
 			if (this.attacking)
 			{
 				this.numAnimationFrames++;
-				if (this.numAnimationFrames >= this.attackFramesPerKeyFrame[this.curTextureIndex])
+				if (this.numAnimationFrames >= AttackFramesPerKeyFrame[this.currentSpriteIndex])
 				{
 					this.numAnimationFrames = 0;
-					this.curTextureIndex++;
-					if (this.curTextureIndex >= this.curTextures.Length)
+					this.currentSpriteIndex++;
+					if (this.currentSpriteIndex >= this.currentSprites.Length)
 					{
 						this.attacking = false;
-						this.curTextureIndex = 0;
+						this.currentSpriteIndex = 0;
 						this.numAnimationFrames = 0;
 						switch (this.direction)
 						{
 							case Direction.Left:
 							case Direction.Right:
-								this.curTextures = this.rightTextures;
+								this.currentSprites = this.walkingRightSprites;
 								break;
 							case Direction.Up:
-								this.curTextures = this.upTextures;
+								this.currentSprites = this.walkingUpSprites;
 								break;
 							case Direction.Down:
-								this.curTextures = this.downTextures;
+								this.currentSprites = this.walkingDownSprites;
 								break;
 						}
 					}
@@ -91,19 +89,19 @@ namespace Lozo
 			{
 				this.attacking = true;
 				this.attackButtonPressed = true;
-				this.curTextureIndex = 0;
+				this.currentSpriteIndex = 0;
 				this.numAnimationFrames = 0;
 				switch (this.direction)
 				{
 					case Direction.Left:
 					case Direction.Right:
-						this.curTextures = this.attackRightTextures;
+						this.currentSprites = this.attackingRightSprites;
 						break;
 					case Direction.Up:
-						this.curTextures = this.attackUpTextures;
+						this.currentSprites = this.attackingUpSprites;
 						break;
 					case Direction.Down:
-						this.curTextures = this.attackDownTextures;
+						this.currentSprites = this.attackingDownSprites;
 						break;
 				}
 			}
@@ -114,47 +112,70 @@ namespace Lozo
 					this.attackButtonPressed = false;
 				}
 
-				int oldX = this.x;
-				int oldY = this.y;
 				Direction oldDirection = this.direction;
 				switch (this.GetMovementDirection(state))
 				{
 					case null: // Not moving
 						break;
 					case Direction.Left:
-						this.x -= WalkSpeed;
-						this.curTextures = this.rightTextures;
+						this.collider.X -= WalkSpeed;
+						this.currentSprites = this.walkingRightSprites;
 						break;
 					case Direction.Right:
-						this.x += WalkSpeed;
-						this.curTextures = this.rightTextures;
+						this.collider.X += WalkSpeed;
+						this.currentSprites = this.walkingRightSprites;
 						break;
 					case Direction.Up:
-						this.y -= WalkSpeed;
-						this.curTextures = this.upTextures;
+						this.collider.Y -= WalkSpeed;
+						this.currentSprites = this.walkingUpSprites;
 						break;
 					case Direction.Down:
-						this.y += WalkSpeed;
-						this.curTextures = this.downTextures;
+						this.collider.Y += WalkSpeed;
+						this.currentSprites = this.walkingDownSprites;
 						break;
 				}
-				this.x = MathHelper.Clamp(this.x, Width / 2, LozoGame.ScreenWidth - (Width / 2));
-				this.y = MathHelper.Clamp(this.y, Height / 2, LozoGame.ScreenHeight - (Height / 2));
-				if (this.direction != oldDirection)
+				List<Rectangle> collided = this.world.CollidingWith(this.collider);
+				switch (this.direction)
 				{
-					this.curTextureIndex = 0;
-					this.numAnimationFrames = 0;
+					case Direction.Left:
+						foreach (Rectangle c in collided)
+							this.collider.X = MathHelper.Max(this.collider.X, c.Right);
+						break;
+					case Direction.Right:
+						int rightX = this.collider.Right;
+						foreach (Rectangle c in collided)
+							rightX = MathHelper.Min(rightX, c.X);
+						this.collider.X = rightX - this.collider.Width;
+						break;
+					case Direction.Up:
+						foreach (Rectangle c in collided)
+							this.collider.Y = MathHelper.Max(this.collider.Y, c.Bottom);
+						break;
+					case Direction.Down:
+						int bottomY = this.collider.Bottom;
+						foreach (Rectangle c in collided)
+							bottomY = MathHelper.Min(bottomY, c.Y);
+						this.collider.Y = bottomY - this.collider.Height;
+						break;
 				}
-				if (this.x != oldX || this.y != oldY)
+				if (this.attemptedMoving)
 				{
-					this.numAnimationFrames++;
-					if (this.numAnimationFrames >= WalkAnimationSpeed)
+					if (this.direction != oldDirection)
 					{
+						this.currentSpriteIndex = 0;
 						this.numAnimationFrames = 0;
-						this.curTextureIndex++;
-						if (this.curTextureIndex >= this.curTextures.Length)
+					}
+					else
+					{
+						++this.numAnimationFrames;
+						if (this.numAnimationFrames >= WalkAnimationSpeed)
 						{
-							this.curTextureIndex = 0;
+							this.numAnimationFrames = 0;
+							++this.currentSpriteIndex;
+							if (this.currentSpriteIndex >= this.currentSprites.Length)
+							{
+								this.currentSpriteIndex = 0;
+							}
 						}
 					}
 				}
@@ -163,26 +184,24 @@ namespace Lozo
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
+			Sprite currentSprite = this.currentSprites[this.currentSpriteIndex];
 			int originX = SpriteWidth / 2;
 			int originY = SpriteHeight / 2;
 			if (this.direction == Direction.Left)
 			{
-				originX = this.curTextures[this.curTextureIndex].Width - (SpriteWidth / 2);
+				originX = currentSprite.Source.Width - (SpriteWidth / 2);
 			}
 			else if (this.direction == Direction.Up)
 			{
-				originY = this.curTextures[this.curTextureIndex].Height - (SpriteHeight / 2);
+				originY = currentSprite.Source.Height - (SpriteHeight / 2);
 			}
-			spriteBatch.Draw(
-				this.spritesheet,
-				new Vector2(this.x, this.y),
-				this.curTextures[this.curTextureIndex],
-				Color.White,
-				0f,
-				new Vector2(originX, originY),
-				LozoGame.Scale,
-				(this.direction == Direction.Left) ? SpriteEffects.FlipHorizontally : SpriteEffects.None,
-				0f);
+			currentSprite.Draw(
+				spriteBatch,
+				this.collider.Center.X,
+				this.collider.Center.Y,
+				originX,
+				originY,
+				(this.direction == Direction.Left) ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
 		}
 
 		public Direction? GetMovementDirection(KeyboardState state)

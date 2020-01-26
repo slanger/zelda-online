@@ -6,19 +6,15 @@ namespace Lozo
 {
 	public class LozoGame : Game
 	{
-		public const int Scale = 3;
-		public const int NumTilesWidth = 16;
-		public const int NumTilesHeight = 11;
-		public const int TileWidth = 16 * Scale;
-		public const int TileHeight = 16 * Scale;
-		public const int ScreenWidth = NumTilesWidth * TileWidth;
-		public const int ScreenHeight = NumTilesHeight * TileHeight;
+		public const int ScreenWidth = World.Width;
+		public const int ScreenHeight = World.Height;
 
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
 		Texture2D debugRect;
 		SpriteFont debugFont;
 		double framerate;
+		World world;
 		Player player;
 		KeyboardState state;
 
@@ -34,15 +30,17 @@ namespace Lozo
 
 		protected override void Initialize()
 		{
-			this.player = new Player();
+			this.world = new World();
+			this.player = new Player(this.world);
+			this.world.AddPlayer(this.player);
 			base.Initialize();
 		}
 
 		protected override void LoadContent()
 		{
 			this.spriteBatch = new SpriteBatch(GraphicsDevice);
-			Texture2D spritesheet = Content.Load<Texture2D>("Link"); // TODO: Use Sprite class
-			this.player.AddSpriteSheet(spritesheet);
+			this.world.AddSpriteSheet(Content.Load<Texture2D>("Overworld"));
+			this.player.AddSpriteSheet(Content.Load<Texture2D>("Link"));
 			this.debugFont = Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });
@@ -62,7 +60,7 @@ namespace Lozo
 			this.state = Keyboard.GetState(); // TODO: GamePad support
 			if (this.state.IsKeyDown(Keys.Escape)) Exit();
 
-			this.player.Update(this.state);
+			this.world.Update(this.state);
 			base.Update(gameTime);
 		}
 
@@ -73,7 +71,8 @@ namespace Lozo
 			GraphicsDevice.Clear(new Color(252, 216, 168));
 			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
-			this.player.Draw(this.spriteBatch);
+			// Draw the world first so that the HUD is drawn on top of anything in the world.
+			this.world.Draw(this.spriteBatch);
 
 			// HUD
 			// Controller buttons

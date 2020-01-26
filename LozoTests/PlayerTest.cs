@@ -12,7 +12,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithZeroButtonsPressed()
 		{
-			var player = new Player();
+			var player = new Player(new World());
 			Direction? direction = player.GetMovementDirection(new KeyboardState());
 			Assert.Null(direction);
 		}
@@ -20,7 +20,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithOneButtonPressed()
 		{
-			var player = new Player();
+			var player = new Player(new World());
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down));
 			Assert.Equal(Direction.Down, direction);
 			direction = player.GetMovementDirection(new KeyboardState(Keys.Left));
@@ -34,7 +34,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithTwoButtonsPressed()
 		{
-			var player = new Player();
+			var player = new Player(new World());
 
 			// Buttons cancel each other out.
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down, Keys.Up));
@@ -131,7 +131,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithThreeButtonsPressed()
 		{
-			var player = new Player();
+			var player = new Player(new World());
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right));
 			Assert.Equal(Direction.Up, direction);
 			direction = player.GetMovementDirection(new KeyboardState(Keys.Up, Keys.Right, Keys.Down));
@@ -145,7 +145,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithFourButtonsPressed()
 		{
-			var player = new Player();
+			var player = new Player(new World());
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down));
 			Assert.Null(direction);  // All four directions cancel each other out.
 		}
