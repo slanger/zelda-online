@@ -5,8 +5,10 @@ namespace Lozo
 {
 	public class Sprite
 	{
-		public Texture2D SpriteSheet { get; }
-		public Rectangle Source { get; }
+		public Texture2D SpriteSheet { get; set; }
+		public Rectangle Source { get; set; }
+
+		public Sprite() { }
 
 		public Sprite(Texture2D spritesheet, Rectangle source)
 		{

@@ -8,34 +8,53 @@ namespace Lozo
 	public class World
 	{
 		public const int Scale = 3;
-		public const int NumTilesWidth = 16;
-		public const int NumTilesHeight = 11;
-		public const int TileWidth = 16 * Scale;
-		public const int TileHeight = 16 * Scale;
-		public const int Width = NumTilesWidth * TileWidth;
-		public const int Height = NumTilesHeight * TileHeight;
-
-		static readonly Rectangle RockSource = new Rectangle(1, 188, 16, 16);
-		static readonly Rectangle[] Rocks = new[] {
-			new Rectangle(TileWidth * 3, TileHeight * 3, TileWidth, TileHeight),
-			new Rectangle(TileWidth * 12, TileHeight * 3, TileWidth, TileHeight),
-			new Rectangle(TileWidth * 3, TileHeight * 7, TileWidth, TileHeight),
-			new Rectangle(TileWidth * 12, TileHeight * 7, TileWidth, TileHeight),
-		};
+		public const int Width = Room.Width;
+		public const int Height = Room.Height;
 
 		Player player;
+		Room[] rooms;
+		Sprite floorSprite;
 		Sprite rockSprite;
 
-		public World() { }
-
-		public void AddPlayer(Player player)
+		public World()
 		{
-			this.player = player;
+			// The sprites get their actual values in the AddSpriteSheet method.
+			this.floorSprite = new Sprite();
+			this.rockSprite = new Sprite();
+
+			Tile[][] tiles = new Tile[Room.NumTilesHeight][];
+			for (int y = 0; y < tiles.Length; ++y)
+			{
+				tiles[y] = new Tile[Room.NumTilesWidth];
+				for (int x = 0; x < tiles[y].Length; ++x)
+				{
+					tiles[y][x] = new Tile(this.floorSprite, new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+				}
+			}
+			var immovables = new List<Rectangle>();
+			tiles[3][3].Sprite = this.rockSprite;
+			immovables.Add(new Rectangle(3 * Room.TileWidth, 3 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			tiles[3][12].Sprite = this.rockSprite;
+			immovables.Add(new Rectangle(12 * Room.TileWidth, 3 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			tiles[7][3].Sprite = this.rockSprite;
+			immovables.Add(new Rectangle(3 * Room.TileWidth, 7 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			tiles[7][12].Sprite = this.rockSprite;
+			immovables.Add(new Rectangle(12 * Room.TileWidth, 7 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			this.rooms = new[] { new Room(tiles, immovables) };
+			this.player = new Player(this.rooms[0], new Point(Room.Width / 2, Room.Height / 2));
 		}
 
 		public void AddSpriteSheet(Texture2D spritesheet)
 		{
-			this.rockSprite = new Sprite(spritesheet, RockSource);
+			this.floorSprite.SpriteSheet = spritesheet;
+			this.floorSprite.Source = new Rectangle(1, 154, 16, 16);
+			this.rockSprite.SpriteSheet = spritesheet;
+			this.rockSprite.Source = new Rectangle(1, 188, 16, 16);
+		}
+
+		public void AddPlayerSpriteSheet(Texture2D spritesheet)
+		{
+			this.player.AddSpriteSheet(spritesheet);
 		}
 
 		public void Update(KeyboardState state)
@@ -45,26 +64,13 @@ namespace Lozo
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			foreach (Rectangle rock in Rocks)
+			foreach (Room r in this.rooms)
 			{
-				this.rockSprite.Draw(spriteBatch, rock.X, rock.Y);
+				r.Draw(spriteBatch);
 			}
 			// Draw the player last so that the player is drawn on top of everything else in the
 			// world.
 			this.player.Draw(spriteBatch);
-		}
-
-		public List<Rectangle> CollidingWith(Rectangle collider)
-		{
-			var colliding = new List<Rectangle>();
-			foreach (Rectangle rock in Rocks)
-			{
-				if (collider.Intersects(rock))
-				{
-					colliding.Add(rock);
-				}
-			}
-			return colliding;
 		}
 	}
 }

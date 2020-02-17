@@ -16,7 +16,7 @@ namespace Lozo
 
 		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
 
-		World world;
+		Room currentRoom;
 		Rectangle collider;
 		int dX;
 		int dY;
@@ -34,10 +34,10 @@ namespace Lozo
 		int currentSpriteIndex;
 		int numAnimationFrames;
 
-		public Player(World world)
+		public Player(Room currentRoom, Point center)
 		{
-			this.world = world;
-			this.collider = new Rectangle((World.Width / 2) - (Width / 2), (World.Height / 2) - (Height / 2), Width, Height);
+			this.currentRoom = currentRoom;
+			this.collider = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
 			this.direction = Direction.Down;
 		}
 
@@ -134,7 +134,7 @@ namespace Lozo
 						this.currentSprites = this.walkingDownSprites;
 						break;
 				}
-				List<Rectangle> collided = this.world.CollidingWith(this.collider);
+				List<Rectangle> collided = this.currentRoom.CollidingWith(this.collider);
 				switch (this.direction)
 				{
 					case Direction.Left:

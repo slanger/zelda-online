@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Globalization;
 
 namespace Lozo
 {
@@ -15,7 +16,6 @@ namespace Lozo
 		SpriteFont debugFont;
 		double framerate;
 		World world;
-		Player player;
 		KeyboardState state;
 
 		public LozoGame()
@@ -24,25 +24,19 @@ namespace Lozo
 			this.graphics.PreferredBackBufferWidth = ScreenWidth;
 			this.graphics.PreferredBackBufferHeight = ScreenHeight;
 			this.graphics.ApplyChanges();
-			Content.RootDirectory = "Content";
-			IsMouseVisible = true;
-		}
+			this.Content.RootDirectory = "Content";
+			this.IsMouseVisible = true;
 
-		protected override void Initialize()
-		{
 			this.world = new World();
-			this.player = new Player(this.world);
-			this.world.AddPlayer(this.player);
-			base.Initialize();
 		}
 
 		protected override void LoadContent()
 		{
-			this.spriteBatch = new SpriteBatch(GraphicsDevice);
-			this.world.AddSpriteSheet(Content.Load<Texture2D>("Overworld"));
-			this.player.AddSpriteSheet(Content.Load<Texture2D>("Link"));
-			this.debugFont = Content.Load<SpriteFont>("Debug");
-			this.debugRect = new Texture2D(GraphicsDevice, 1, 1);
+			this.spriteBatch = new SpriteBatch(this.GraphicsDevice);
+			this.world.AddSpriteSheet(this.Content.Load<Texture2D>("Overworld"));
+			this.world.AddPlayerSpriteSheet(this.Content.Load<Texture2D>("Link"));
+			this.debugFont = this.Content.Load<SpriteFont>("Debug");
+			this.debugRect = new Texture2D(this.GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });
 		}
 
@@ -76,13 +70,13 @@ namespace Lozo
 
 			// HUD
 			// Map lines
-			for (int x = 0; x < World.Width; x += World.TileWidth)
+			for (int x = 0; x < Room.Width; x += Room.TileWidth)
 			{
-				this.spriteBatch.Draw(this.debugRect, new Rectangle(x, 0, 1, World.Height), new Color(Color.Gray, 0.5f));
+				this.spriteBatch.Draw(this.debugRect, new Rectangle(x, 0, 1, Room.Height), new Color(Color.Gray, 0.5f));
 			}
-			for (int y = 0; y < World.Height; y += World.TileHeight)
+			for (int y = 0; y < Room.Height; y += Room.TileHeight)
 			{
-				this.spriteBatch.Draw(this.debugRect, new Rectangle(0, y, World.Width, 1), new Color(Color.Gray, 0.5f));
+				this.spriteBatch.Draw(this.debugRect, new Rectangle(0, y, Room.Width, 1), new Color(Color.Gray, 0.5f));
 			}
 
 			// Controller buttons
@@ -106,7 +100,7 @@ namespace Lozo
 			// Frame rate
 			this.spriteBatch.DrawString(
 				this.debugFont,
-				string.Format("FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
+				string.Format(CultureInfo.InvariantCulture, "FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
 				new Vector2(5, 5),
 				Color.White,
 				0,
