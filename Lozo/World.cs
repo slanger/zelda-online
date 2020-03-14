@@ -31,15 +31,27 @@ namespace Lozo
 					tiles[y][x] = new Tile(this.floorSprite, new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
 				}
 			}
+
 			var immovables = new List<Rectangle>();
-			tiles[3][3].Sprite = this.rockSprite;
-			immovables.Add(new Rectangle(3 * Room.TileWidth, 3 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
-			tiles[3][12].Sprite = this.rockSprite;
-			immovables.Add(new Rectangle(12 * Room.TileWidth, 3 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
-			tiles[7][3].Sprite = this.rockSprite;
-			immovables.Add(new Rectangle(3 * Room.TileWidth, 7 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
-			tiles[7][12].Sprite = this.rockSprite;
-			immovables.Add(new Rectangle(12 * Room.TileWidth, 7 * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			void addRock(int x, int y)
+			{
+				tiles[y][x].Sprite = this.rockSprite;
+				immovables.Add(new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			}
+			addRock(3, 3);
+			addRock(12, 3);
+			addRock(3, 7);
+			addRock(12, 7);
+			for (int x = 0; x < tiles[0].Length; ++x)
+			{
+				addRock(x, 0);
+				addRock(x, 10);
+			}
+			for (int y = 1; y < tiles.Length - 1; ++y)
+			{
+				if (y != 5) addRock(0, y);
+				addRock(15, y);
+			}
 			this.rooms = new[] { new Room(tiles, immovables) };
 			this.player = new Player(this.rooms[0], new Point(Room.Width / 2, Room.Height / 2));
 		}
