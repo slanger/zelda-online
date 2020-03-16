@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Lozo
@@ -16,6 +17,7 @@ namespace Lozo
 		SpriteFont debugFont;
 		double framerate;
 		World world;
+		Player player;
 		KeyboardState state;
 
 		public LozoGame()
@@ -27,14 +29,17 @@ namespace Lozo
 			this.Content.RootDirectory = "Content";
 			this.IsMouseVisible = true;
 
-			this.world = new World();
+			this.CreateWorld();
+			var location = new Point(Room.Width + (Room.Width / 2), Room.Height / 2);
+			this.player = new Player(this.world, location);
+			this.world.AddPlayer(this.player);
 		}
 
 		protected override void LoadContent()
 		{
 			this.spriteBatch = new SpriteBatch(this.GraphicsDevice);
-			this.world.AddSpriteSheet(this.Content.Load<Texture2D>("Overworld"));
-			this.world.AddPlayerSpriteSheet(this.Content.Load<Texture2D>("Link"));
+			Sprite.AddSpriteSheet("overworld", this.Content.Load<Texture2D>("Overworld"));
+			Sprite.AddSpriteSheet("link", this.Content.Load<Texture2D>("Link"));
 			this.debugFont = this.Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(this.GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });
@@ -43,8 +48,8 @@ namespace Lozo
 		protected override void UnloadContent()
 		{
 			base.UnloadContent();
-			this.spriteBatch.Dispose();
-			this.debugRect.Dispose();
+			this.spriteBatch?.Dispose();
+			this.debugRect?.Dispose();
 		}
 
 		protected override void Update(GameTime gameTime)
@@ -109,8 +114,98 @@ namespace Lozo
 				SpriteEffects.None,
 				0.5f);
 
+			// Player's walking collider
+			Rectangle walkingCollider = this.player.WalkingCollider();
+			Point relLocation = this.world.RelativeToCurrentRoom(walkingCollider.Location);
+			this.spriteBatch.Draw(
+				this.debugRect,
+				new Rectangle(relLocation, walkingCollider.Size),
+				new Color(Color.Red, 0.5f));
+
 			this.spriteBatch.End();
 			base.Draw(gameTime);
+		}
+
+		private void CreateWorld()
+		{
+			Tile[,] tiles;
+			List<Rectangle> immovables;
+			void createEmptyRoom()
+			{
+				tiles = new Tile[Room.NumTilesHeight, Room.NumTilesWidth];
+				for (int y = 0; y < tiles.GetLength(0); ++y)
+				{
+					for (int x = 0; x < tiles.GetLength(1); ++x)
+					{
+						tiles[y, x] = new Tile(new Sprite(SpriteID.Floor), new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+					}
+				}
+				immovables = new List<Rectangle>();
+			}
+			void addRock(int x, int y)
+			{
+				tiles[y, x].Sprite = new Sprite(SpriteID.Rock);
+				immovables.Add(new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+			}
+
+			// Room 1
+			createEmptyRoom();
+			addRock(7, 5);
+			addRock(6, 5);
+			addRock(7, 4);
+			addRock(8, 5);
+			addRock(7, 6);
+			for (int x = 0; x < tiles.GetLength(1); ++x)
+			{
+				addRock(x, 0);
+				addRock(x, 10);
+			}
+			for (int y = 1; y < tiles.GetLength(0) - 1; ++y)
+			{
+				addRock(0, y);
+				if (y != 5) addRock(15, y);
+			}
+			Room room1 = new Room(new Point(0, 0), tiles, immovables);
+
+			// Room 2
+			createEmptyRoom();
+			addRock(3, 3);
+			addRock(12, 3);
+			addRock(3, 7);
+			addRock(12, 7);
+			for (int x = 0; x < tiles.GetLength(1); ++x)
+			{
+				addRock(x, 0);
+				if (x != 7 && x != 8) addRock(x, 10);
+			}
+			for (int y = 1; y < tiles.GetLength(0) - 1; ++y)
+			{
+				if (y != 5) addRock(0, y);
+				addRock(15, y);
+			}
+			Room room2 = new Room(new Point(1, 0), tiles, immovables);
+
+			// Room 3
+			createEmptyRoom();
+			addRock(7, 5);
+			addRock(8, 5);
+			for (int x = 0; x < tiles.GetLength(1); ++x)
+			{
+				if (x != 7 && x != 8) addRock(x, 0);
+				addRock(x, 10);
+			}
+			for (int y = 1; y < tiles.GetLength(0) - 1; ++y)
+			{
+				addRock(0, y);
+				addRock(15, y);
+			}
+			Room room3 = new Room(new Point(1, 1), tiles, immovables);
+
+			var rooms = new Room[2, 2];
+			rooms[room1.DungeonLocation.Y, room1.DungeonLocation.X] = room1;
+			rooms[room2.DungeonLocation.Y, room2.DungeonLocation.X] = room2;
+			rooms[room3.DungeonLocation.Y, room3.DungeonLocation.X] = room3;
+			this.world = new World(rooms);
 		}
 	}
 }

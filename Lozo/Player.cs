@@ -7,13 +7,22 @@ namespace Lozo
 {
 	public class Player
 	{
-		const int SpriteWidth = 16;
-		const int SpriteHeight = 16;
-		const int Width = SpriteWidth * World.Scale;
-		const int Height = SpriteHeight * World.Scale;
+		public const int SpriteWidth = 16;
+		public const int SpriteHeight = 16;
+		public const int Width = SpriteWidth * World.Scale;
+		public const int Height = SpriteHeight * World.Scale;
 		const int WalkSpeed = 4; // Based on Scale = 3
 		const int WalkAnimationSpeed = 6; // Frames per animation key frame
 
+		// When facing left, we use the right textures, but in the Draw() call, we flip the sprites
+		// horizontally.
+		// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
+		static readonly Sprite[] WalkingRightSprites = new[] { new Sprite(SpriteID.WalkRight1), new Sprite(SpriteID.WalkRight2) };
+		static readonly Sprite[] WalkingUpSprites = new[] { new Sprite(SpriteID.WalkUp1), new Sprite(SpriteID.WalkUp2) };
+		static readonly Sprite[] WalkingDownSprites = new[] { new Sprite(SpriteID.WalkDown1), new Sprite(SpriteID.WalkDown2) };
+		static readonly Sprite[] AttackingRightSprites = new[] { new Sprite(SpriteID.AttackRight1), new Sprite(SpriteID.AttackRight2), new Sprite(SpriteID.AttackRight3), new Sprite(SpriteID.AttackRight4) };
+		static readonly Sprite[] AttackingUpSprites = new[] { new Sprite(SpriteID.AttackUp1), new Sprite(SpriteID.AttackUp2), new Sprite(SpriteID.AttackUp3), new Sprite(SpriteID.AttackUp4) };
+		static readonly Sprite[] AttackingDownSprites = new[] { new Sprite(SpriteID.AttackDown1), new Sprite(SpriteID.AttackDown2), new Sprite(SpriteID.AttackDown3), new Sprite(SpriteID.AttackDown4) };
 		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
 
 		World world;
@@ -24,12 +33,6 @@ namespace Lozo
 		bool attemptedMoving;
 		bool attacking;
 		bool attackButtonPressed;
-		Sprite[] walkingRightSprites;
-		Sprite[] walkingUpSprites;
-		Sprite[] walkingDownSprites;
-		Sprite[] attackingRightSprites;
-		Sprite[] attackingUpSprites;
-		Sprite[] attackingDownSprites;
 		Sprite[] currentSprites;
 		int currentSpriteIndex;
 		int numAnimationFrames;
@@ -39,21 +42,8 @@ namespace Lozo
 			this.world = world;
 			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
 			this.direction = Direction.Down;
+			this.currentSprites = WalkingDownSprites;
 			this.world.UpdateCurrentRoom(this.location);
-		}
-
-		public void AddSpriteSheet(Texture2D spritesheet)
-		{
-			// When facing left, we use the right textures, but in the Draw() call, we flip the
-			// sprites horizontally.
-			// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
-			this.walkingRightSprites = new[] { new Sprite(spritesheet, new Rectangle(35, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(52, 11, SpriteWidth, SpriteHeight)) };
-			this.walkingUpSprites = new[] { new Sprite(spritesheet, new Rectangle(69, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(86, 11, SpriteWidth, SpriteHeight)) };
-			this.walkingDownSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 11, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 11, SpriteWidth, SpriteHeight)) };
-			this.attackingRightSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 77, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 77, 27, SpriteHeight)), new Sprite(spritesheet, new Rectangle(46, 77, 23, SpriteHeight)), new Sprite(spritesheet, new Rectangle(70, 77, 19, SpriteHeight)) };
-			this.attackingUpSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 109, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 97, SpriteWidth, 28)), new Sprite(spritesheet, new Rectangle(35, 98, SpriteWidth, 27)), new Sprite(spritesheet, new Rectangle(52, 106, SpriteWidth, 19)) };
-			this.attackingDownSprites = new[] { new Sprite(spritesheet, new Rectangle(1, 47, SpriteWidth, SpriteHeight)), new Sprite(spritesheet, new Rectangle(18, 47, SpriteWidth, 27)), new Sprite(spritesheet, new Rectangle(35, 47, SpriteWidth, 23)), new Sprite(spritesheet, new Rectangle(52, 47, SpriteWidth, 19)) };
-			this.currentSprites = this.walkingDownSprites;
 		}
 
 		public void Update(KeyboardState state)
@@ -74,13 +64,13 @@ namespace Lozo
 						{
 							case Direction.Left:
 							case Direction.Right:
-								this.currentSprites = this.walkingRightSprites;
+								this.currentSprites = WalkingRightSprites;
 								break;
 							case Direction.Up:
-								this.currentSprites = this.walkingUpSprites;
+								this.currentSprites = WalkingUpSprites;
 								break;
 							case Direction.Down:
-								this.currentSprites = this.walkingDownSprites;
+								this.currentSprites = WalkingDownSprites;
 								break;
 						}
 					}
@@ -96,13 +86,13 @@ namespace Lozo
 				{
 					case Direction.Left:
 					case Direction.Right:
-						this.currentSprites = this.attackingRightSprites;
+						this.currentSprites = AttackingRightSprites;
 						break;
 					case Direction.Up:
-						this.currentSprites = this.attackingUpSprites;
+						this.currentSprites = AttackingUpSprites;
 						break;
 					case Direction.Down:
-						this.currentSprites = this.attackingDownSprites;
+						this.currentSprites = AttackingDownSprites;
 						break;
 				}
 			}
@@ -121,19 +111,19 @@ namespace Lozo
 						break;
 					case Direction.Left:
 						walkingCollider.X -= WalkSpeed;
-						this.currentSprites = this.walkingRightSprites;
+						this.currentSprites = WalkingRightSprites;
 						break;
 					case Direction.Right:
 						walkingCollider.X += WalkSpeed;
-						this.currentSprites = this.walkingRightSprites;
+						this.currentSprites = WalkingRightSprites;
 						break;
 					case Direction.Up:
 						walkingCollider.Y -= WalkSpeed;
-						this.currentSprites = this.walkingUpSprites;
+						this.currentSprites = WalkingUpSprites;
 						break;
 					case Direction.Down:
 						walkingCollider.Y += WalkSpeed;
-						this.currentSprites = this.walkingDownSprites;
+						this.currentSprites = WalkingDownSprites;
 						break;
 				}
 				List<Rectangle> collided = this.world.CollidingWith(walkingCollider);
