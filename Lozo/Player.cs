@@ -16,7 +16,7 @@ namespace Lozo
 
 		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
 
-		Room currentRoom;
+		World world;
 		Rectangle location;
 		int dX;
 		int dY;
@@ -34,21 +34,12 @@ namespace Lozo
 		int currentSpriteIndex;
 		int numAnimationFrames;
 
-		private Rectangle WalkingCollider()
+		public Player(World world, Point center)
 		{
-			return new Rectangle(this.location.X, this.location.Y + (Height / 2), Width, Height / 2);
-		}
-
-		private void UpdateLocationFromWalking(Rectangle walkingCollider)
-		{
-			this.location = new Rectangle(walkingCollider.X, walkingCollider.Y - (Height / 2), Width, Height);
-		}
-
-		public Player(Room currentRoom, Point center)
-		{
-			this.currentRoom = currentRoom;
+			this.world = world;
 			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
 			this.direction = Direction.Down;
+			this.world.UpdateCurrentRoom(this.location);
 		}
 
 		public void AddSpriteSheet(Texture2D spritesheet)
@@ -122,30 +113,30 @@ namespace Lozo
 					this.attackButtonPressed = false;
 				}
 
+				Rectangle walkingCollider = this.WalkingCollider();
 				Direction oldDirection = this.direction;
 				switch (this.GetMovementDirection(state))
 				{
 					case null: // Not moving
 						break;
 					case Direction.Left:
-						this.location.X -= WalkSpeed;
+						walkingCollider.X -= WalkSpeed;
 						this.currentSprites = this.walkingRightSprites;
 						break;
 					case Direction.Right:
-						this.location.X += WalkSpeed;
+						walkingCollider.X += WalkSpeed;
 						this.currentSprites = this.walkingRightSprites;
 						break;
 					case Direction.Up:
-						this.location.Y -= WalkSpeed;
+						walkingCollider.Y -= WalkSpeed;
 						this.currentSprites = this.walkingUpSprites;
 						break;
 					case Direction.Down:
-						this.location.Y += WalkSpeed;
+						walkingCollider.Y += WalkSpeed;
 						this.currentSprites = this.walkingDownSprites;
 						break;
 				}
-				Rectangle walkingCollider = this.WalkingCollider();
-				List<Rectangle> collided = this.currentRoom.CollidingWith(walkingCollider);
+				List<Rectangle> collided = this.world.CollidingWith(walkingCollider);
 				switch (this.direction)
 				{
 					case Direction.Left:
@@ -208,10 +199,11 @@ namespace Lozo
 			{
 				originY = currentSprite.Source.Height - (SpriteHeight / 2);
 			}
+			Point center = this.world.RelativeToCurrentRoom(this.location.Center);
 			currentSprite.Draw(
 				spriteBatch,
-				this.location.Center.X,
-				this.location.Center.Y,
+				center.X,
+				center.Y,
 				originX,
 				originY,
 				(this.direction == Direction.Left) ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
@@ -299,6 +291,17 @@ namespace Lozo
 			// If no buttons are pressed, then we're not moving.
 			// If all 4 buttons are pressed, that means that they all cancel each other out.
 			return null;
+		}
+
+		public Rectangle WalkingCollider()
+		{
+			return new Rectangle(this.location.X + (3 * World.Scale), this.location.Y + (Height / 2), Width - (6 * World.Scale), Height / 2);
+		}
+
+		private void UpdateLocationFromWalking(Rectangle walkingCollider)
+		{
+			this.location = new Rectangle(walkingCollider.X - (3 * World.Scale), walkingCollider.Y - (Height / 2), Width, Height);
+			this.world.UpdateCurrentRoom(this.location);
 		}
 	}
 }
