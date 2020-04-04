@@ -13,12 +13,14 @@ namespace Lozo
 
 		GraphicsDeviceManager graphics;
 		SpriteBatch spriteBatch;
-		Texture2D debugRect;
-		SpriteFont debugFont;
-		double framerate;
 		World world;
 		Player player;
 		KeyboardState state;
+		bool debugMode;
+		bool debugButtonPressed;
+		Texture2D debugRect;
+		SpriteFont debugFont;
+		double framerate;
 
 		public LozoGame()
 		{
@@ -58,6 +60,21 @@ namespace Lozo
 
 			this.state = Keyboard.GetState(); // TODO: GamePad support
 			if (this.state.IsKeyDown(Keys.Escape)) Exit();
+			if (this.debugButtonPressed)
+			{
+				if (this.state.IsKeyUp(Keys.D))
+				{
+					this.debugButtonPressed = false;
+				}
+			}
+			else
+			{
+				if (this.state.IsKeyDown(Keys.D))
+				{
+					this.debugMode = !this.debugMode;
+					this.debugButtonPressed = true;
+				}
+			}
 
 			this.world.Update(this.state);
 			base.Update(gameTime);
@@ -65,8 +82,6 @@ namespace Lozo
 
 		protected override void Draw(GameTime gameTime)
 		{
-			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
-
 			GraphicsDevice.Clear(new Color(252, 216, 168));
 			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
@@ -74,6 +89,19 @@ namespace Lozo
 			this.world.Draw(this.spriteBatch);
 
 			// HUD
+			if (this.debugMode)
+			{
+				this.DrawDebugInfo(gameTime);
+			}
+
+			this.spriteBatch.End();
+			base.Draw(gameTime);
+		}
+
+		private void DrawDebugInfo(GameTime gameTime)
+		{
+			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
+
 			// Map lines
 			for (int x = 0; x < Room.Width; x += Room.TileWidth)
 			{
@@ -88,31 +116,31 @@ namespace Lozo
 			this.spriteBatch.Draw(
 				this.debugRect,
 				new Rectangle(ScreenWidth - 50, 5, 20, 20),
-				new Color(Color.Gray, this.state.IsKeyDown(Keys.Up) ? 0.1f : 0.5f));
+				new Color(Color.LightGray, this.state.IsKeyDown(Keys.Up) ? 1f : 0.7f));
 			this.spriteBatch.Draw(
 				this.debugRect,
 				new Rectangle(ScreenWidth - 75, 30, 20, 20),
-				new Color(Color.Gray, this.state.IsKeyDown(Keys.Left) ? 0.1f : 0.5f));
+				new Color(Color.LightGray, this.state.IsKeyDown(Keys.Left) ? 1f : 0.7f));
 			this.spriteBatch.Draw(
 				this.debugRect,
 				new Rectangle(ScreenWidth - 50, 30, 20, 20),
-				new Color(Color.Gray, this.state.IsKeyDown(Keys.Down) ? 0.1f : 0.5f));
+				new Color(Color.LightGray, this.state.IsKeyDown(Keys.Down) ? 1f : 0.7f));
 			this.spriteBatch.Draw(
 				this.debugRect,
 				new Rectangle(ScreenWidth - 25, 30, 20, 20),
-				new Color(Color.Gray, this.state.IsKeyDown(Keys.Right) ? 0.1f : 0.5f));
+				new Color(Color.LightGray, this.state.IsKeyDown(Keys.Right) ? 1f : 0.7f));
 
 			// Frame rate
 			this.spriteBatch.DrawString(
 				this.debugFont,
 				string.Format(CultureInfo.InvariantCulture, "FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
 				new Vector2(5, 5),
-				Color.White,
-				0,
+				new Color(31, 246, 31),
+				0f,
 				new Vector2(),
-				1.0f,
+				1f,
 				SpriteEffects.None,
-				0.5f);
+				1f);
 
 			// Player's walking collider
 			Rectangle walkingCollider = this.player.WalkingCollider();
@@ -121,9 +149,6 @@ namespace Lozo
 				this.debugRect,
 				new Rectangle(relLocation, walkingCollider.Size),
 				new Color(Color.Red, 0.5f));
-
-			this.spriteBatch.End();
-			base.Draw(gameTime);
 		}
 
 		private void CreateWorld()
