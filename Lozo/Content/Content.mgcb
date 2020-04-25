@@ -10,6 +10,7 @@
 
 #-------------------------------- References --------------------------------#
 
+/reference:dll\3.7.0\MonoGame.Extended.Content.Pipeline.dll
 
 #---------------------------------- Content ---------------------------------#
 
@@ -19,6 +20,23 @@
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
 /build:Debug.spritefont
+
+#begin Demo.tmx
+/importer:TiledMapImporter
+/processor:TiledMapProcessor
+/build:Demo.tmx
+
+#begin Dungeon1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=0,128,0,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Dungeon1.png
 
 #begin Link.png
 /importer:TextureImporter
@@ -43,4 +61,21 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Overworld.png
+
+#begin OverworldTileset.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:OverworldTileset.png
+
+#begin OverworldTileset.tsx
+/importer:TiledMapTilesetImporter
+/processor:TiledMapTilesetProcessor
+/build:OverworldTileset.tsx
 
