@@ -3,21 +3,37 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <ApplicationIcon />
-    <StartupObject />
+    <MonoGamePlatform>DesktopGL</MonoGamePlatform>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <TieredCompilation>false</TieredCompilation>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Content\Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <MonoGameContentReference Include="**\*.mgcb" />
+    <None Remove="Content\Icon.ico" />
+    <None Remove="Content\Icon.bmp" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.8">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.0.9" />
-    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.0.2" />
+    <EmbeddedResource Include="Content\Icon.ico" />
+    <EmbeddedResource Include="Content\Icon.bmp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <MonoGameContentReference Include="Content\Content.mgcb" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="Microsoft.Xna.Framework.Content.ContentTypeReader" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL.Core" Version="3.8.*" />
+    <PackageReference Include="MonoGame.Content.Builder" Version="3.7.*" />
   </ItemGroup>
 
 </Project>
