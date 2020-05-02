@@ -1,18 +1,25 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
+using MonoGame.Extended;
+using MonoGame.Extended.Tiled;
+using MonoGame.Extended.Tiled.Renderers;
+using MonoGame.Extended.ViewportAdapters;
+//using System.Collections.Generic;
 using System.Globalization;
 
 namespace Lozo
 {
 	public class LozoGame : Game
 	{
-		public const int ScreenWidth = World.Width;
-		public const int ScreenHeight = World.Height;
+		public const int ScreenWidth = Room.Width;
+		public const int ScreenHeight = Room.Height;
 
 		GraphicsDeviceManager graphics;
+		BoxingViewportAdapter viewportAdapter;
 		SpriteBatch spriteBatch;
+		OrthographicCamera camera;
+		TiledMapRenderer mapRenderer;
 		World world;
 		Player player;
 		KeyboardState state;
@@ -31,10 +38,10 @@ namespace Lozo
 			this.Content.RootDirectory = "Content";
 			this.IsMouseVisible = true;
 
-			this.CreateWorld();
-			var location = new Point(Room.Width + (Room.Width / 2), Room.Height / 2);
-			this.player = new Player(this.world, location);
-			this.world.AddPlayer(this.player);
+			//this.CreateWorld();
+			//var location = new Point(Room.Width + (Room.Width / 2), Room.Height / 2);
+			//this.player = new Player(this.world, location);
+			//this.world.AddPlayer(this.player);
 		}
 
 		protected override void LoadContent()
@@ -42,6 +49,18 @@ namespace Lozo
 			this.spriteBatch = new SpriteBatch(this.GraphicsDevice);
 			Sprite.AddSpriteSheet("overworld", this.Content.Load<Texture2D>("Overworld"));
 			Sprite.AddSpriteSheet("link", this.Content.Load<Texture2D>("Link"));
+			this.world = new World();
+			this.viewportAdapter = new BoxingViewportAdapter(this.Window, this.GraphicsDevice, ScreenWidth, ScreenHeight);
+			this.camera = new OrthographicCamera(this.viewportAdapter);
+			this.world.Camera = this.camera;
+			var map = this.Content.Load<TiledMap>("Dungeon");
+			this.mapRenderer = new TiledMapRenderer(this.GraphicsDevice, map);
+			var dungeon = new Dungeon(map, this.mapRenderer);
+			this.world.Dungeons.Add(dungeon);
+			var startingPoint = new Point(632 /* * World.Scale */, 1008 /* * World.Scale */);
+			this.player = new Player(dungeon, startingPoint, Direction.Down);
+			this.camera.LookAt(new Vector2(startingPoint.X, startingPoint.Y));
+			this.world.Player = this.player;
 			this.debugFont = this.Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(this.GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });
@@ -50,7 +69,10 @@ namespace Lozo
 		protected override void UnloadContent()
 		{
 			base.UnloadContent();
+			this.graphics.Dispose();
 			this.spriteBatch?.Dispose();
+			this.viewportAdapter?.Dispose();
+			this.mapRenderer?.Dispose();
 			this.debugRect?.Dispose();
 		}
 
@@ -76,6 +98,15 @@ namespace Lozo
 				}
 			}
 
+			if (state.IsKeyDown(Keys.A))
+			{
+				this.camera.ZoomIn(0.01f);
+			}
+			if (state.IsKeyDown(Keys.Z))
+			{
+				this.camera.ZoomOut(0.01f);
+			}
+
 			this.world.Update(this.state);
 			base.Update(gameTime);
 		}
@@ -83,7 +114,6 @@ namespace Lozo
 		protected override void Draw(GameTime gameTime)
 		{
 			GraphicsDevice.Clear(new Color(252, 216, 168));
-			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp);
 
 			// Draw the world first so that the HUD is drawn on top of anything in the world.
 			this.world.Draw(this.spriteBatch);
@@ -94,13 +124,13 @@ namespace Lozo
 				this.DrawDebugInfo(gameTime);
 			}
 
-			this.spriteBatch.End();
 			base.Draw(gameTime);
 		}
 
 		private void DrawDebugInfo(GameTime gameTime)
 		{
 			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
+			this.spriteBatch.Begin(transformMatrix: this.camera.GetViewMatrix(), samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.BackToFront);
 
 			// Map lines
 			for (int x = 0; x < Room.Width; x += Room.TileWidth)
@@ -142,6 +172,7 @@ namespace Lozo
 				SpriteEffects.None,
 				1f);
 
+			/*
 			// Player's walking collider
 			Rectangle walkingCollider = this.player.WalkingCollider();
 			Point relLocation = this.world.RelativeToCurrentRoom(walkingCollider.Location);
@@ -149,8 +180,12 @@ namespace Lozo
 				this.debugRect,
 				new Rectangle(relLocation, walkingCollider.Size),
 				new Color(Color.Red, 0.5f));
+			*/
+
+			this.spriteBatch.End();
 		}
 
+		/*
 		private void CreateWorld()
 		{
 			Tile[,] tiles;
@@ -232,5 +267,6 @@ namespace Lozo
 			rooms[room3.DungeonLocation.Y, room3.DungeonLocation.X] = room3;
 			this.world = new World(rooms);
 		}
+		*/
 	}
 }

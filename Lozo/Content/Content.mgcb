@@ -21,22 +21,27 @@
 /processorParam:TextureFormat=Compressed
 /build:Debug.spritefont
 
-#begin Demo.tmx
+#begin Dungeon.tmx
 /importer:TiledMapImporter
 /processor:TiledMapProcessor
-/build:Demo.tmx
+/build:Dungeon.tmx
 
-#begin Dungeon1.png
+#begin DungeonTiles.png
 /importer:TextureImporter
 /processor:TextureProcessor
-/processorParam:ColorKeyColor=0,128,0,255
+/processorParam:ColorKeyColor=255,0,255,255
 /processorParam:ColorKeyEnabled=True
 /processorParam:GenerateMipmaps=False
 /processorParam:PremultiplyAlpha=True
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Dungeon1.png
+/build:DungeonTiles.png
+
+#begin DungeonTileset.tsx
+/importer:TiledMapTilesetImporter
+/processor:TiledMapTilesetProcessor
+/build:DungeonTileset.tsx
 
 #begin Link.png
 /importer:TextureImporter

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 using System.Collections.Generic;
 
 namespace Lozo
@@ -25,7 +26,7 @@ namespace Lozo
 		static readonly Sprite[] AttackingDownSprites = new[] { new Sprite(SpriteID.AttackDown1), new Sprite(SpriteID.AttackDown2), new Sprite(SpriteID.AttackDown3), new Sprite(SpriteID.AttackDown4) };
 		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
 
-		World world;
+		Dungeon dungeon;
 		Rectangle location;
 		int dX;
 		int dY;
@@ -37,13 +38,18 @@ namespace Lozo
 		int currentSpriteIndex;
 		int numAnimationFrames;
 
-		public Player(World world, Point center)
+		public Player(Dungeon currentDungeon, Point center, Direction facingDirection)
 		{
-			this.world = world;
+			this.SetLocation(currentDungeon, center, facingDirection);
+		}
+
+		public void SetLocation(Dungeon dungeon, Point center, Direction direction)
+		{
+			this.dungeon = dungeon;
 			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
-			this.direction = Direction.Down;
-			this.currentSprites = WalkingDownSprites;
-			this.world.UpdateCurrentRoom(this.location);
+			//this.dungeon.UpdateCurrentRoom(this.location);
+			this.direction = direction;
+			this.currentSprites = GetWalkingSprites(direction);
 		}
 
 		public void Update(KeyboardState state)
@@ -126,7 +132,8 @@ namespace Lozo
 						this.currentSprites = WalkingDownSprites;
 						break;
 				}
-				List<Rectangle> collided = this.world.CollidingWith(walkingCollider);
+				/*
+				List<Rectangle> collided = this.dungeon.CollidingWith(walkingCollider);
 				switch (this.direction)
 				{
 					case Direction.Left:
@@ -150,6 +157,7 @@ namespace Lozo
 						walkingCollider.Y = bottomY - walkingCollider.Height;
 						break;
 				}
+				*/
 				this.UpdateLocationFromWalking(walkingCollider);
 
 				if (this.attemptedMoving)
@@ -189,7 +197,8 @@ namespace Lozo
 			{
 				originY = currentSprite.Source.Height - (SpriteHeight / 2);
 			}
-			Point center = this.world.RelativeToCurrentRoom(this.location.Center);
+			//Point center = this.dungeon.RelativeToCurrentRoom(this.location.Center);
+			Point center = this.location.Center;
 			currentSprite.Draw(
 				spriteBatch,
 				center.X,
@@ -291,7 +300,22 @@ namespace Lozo
 		private void UpdateLocationFromWalking(Rectangle walkingCollider)
 		{
 			this.location = new Rectangle(walkingCollider.X - (3 * World.Scale), walkingCollider.Y - (Height / 2), Width, Height);
-			this.world.UpdateCurrentRoom(this.location);
+			//this.dungeon.UpdateCurrentRoom(this.location);
+		}
+
+		private static Sprite[] GetWalkingSprites(Direction direction)
+		{
+			switch (direction)
+			{
+				case Direction.Left:
+				case Direction.Right:
+					return WalkingRightSprites;
+				case Direction.Up:
+					return WalkingUpSprites;
+				case Direction.Down:
+					return WalkingDownSprites;
+			}
+			throw new ArgumentException("Invalid direction: " + direction);
 		}
 	}
 }
