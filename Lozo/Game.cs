@@ -40,7 +40,6 @@ namespace Lozo
 		protected override void LoadContent()
 		{
 			this.spriteBatch = new SpriteBatch(this.GraphicsDevice);
-			Sprite.AddSpriteSheet("overworld", this.Content.Load<Texture2D>("Overworld"));
 			Sprite.AddSpriteSheet("link", this.Content.Load<Texture2D>("Link"));
 			this.world = new World();
 			this.viewportAdapter = new BoxingViewportAdapter(this.Window, this.GraphicsDevice, ScreenWidth, ScreenHeight);
