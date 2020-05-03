@@ -5,7 +5,6 @@ using MonoGame.Extended;
 using MonoGame.Extended.Tiled;
 using MonoGame.Extended.Tiled.Renderers;
 using MonoGame.Extended.ViewportAdapters;
-using System.Globalization;
 
 namespace Lozo
 {
@@ -157,7 +156,7 @@ namespace Lozo
 			// Frame rate
 			this.spriteBatch.DrawString(
 				this.debugFont,
-				string.Format(CultureInfo.InvariantCulture, "FPS: {0:0.00}, {1:0.00}", this.framerate, drawFramerate),
+				$"FPS: {this.framerate:0.00}, {drawFramerate:0.00}",
 				new Vector2(5, 5),
 				new Color(31, 246, 31),
 				0f,

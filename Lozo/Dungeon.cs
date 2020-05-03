@@ -52,7 +52,7 @@ namespace Lozo
 						}
 					}
 				}
-				throw new ArgumentException("Player start location is invalid: " + location);
+				throw new ArgumentException($"Player start location is invalid: {location}");
 			}
 			Rectangle boundingBox = this.currentRoom.BoundingBox();
 			if (!boundingBox.Contains(center))

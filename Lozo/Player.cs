@@ -306,7 +306,7 @@ namespace Lozo
 				case Direction.Down:
 					return WalkingDownSprites;
 			}
-			throw new ArgumentException("Invalid direction: " + direction);
+			throw new ArgumentException($"Invalid direction: {direction}");
 		}
 	}
 }
