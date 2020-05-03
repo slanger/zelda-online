@@ -41,15 +41,6 @@ namespace Lozo
 			this.SetLocation(currentDungeon, center, facingDirection);
 		}
 
-		public void SetLocation(Dungeon dungeon, Point center, Direction direction)
-		{
-			this.dungeon = dungeon;
-			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
-			//this.dungeon.UpdateCurrentRoom(this.location);
-			this.direction = direction;
-			this.currentSprites = GetWalkingSprites(direction);
-		}
-
 		public void Update(KeyboardState state)
 		{
 			if (this.attacking)
@@ -120,7 +111,6 @@ namespace Lozo
 						this.currentSprites = WalkingDownSprites;
 						break;
 				}
-				/*
 				List<Rectangle> collided = this.dungeon.CollidingWith(walkingCollider);
 				switch (this.direction)
 				{
@@ -145,7 +135,6 @@ namespace Lozo
 						walkingCollider.Y = bottomY - walkingCollider.Height;
 						break;
 				}
-				*/
 				this.UpdateLocationFromWalking(walkingCollider);
 
 				if (this.attemptedMoving)
@@ -185,7 +174,6 @@ namespace Lozo
 			{
 				originY = currentSprite.Source.Height - Height;
 			}
-			//Point center = this.dungeon.RelativeToCurrentRoom(this.location.Center);
 			currentSprite.Draw(
 				spriteBatch,
 				this.location.X,
@@ -287,12 +275,6 @@ namespace Lozo
 				Height / 2);
 		}
 
-		private void UpdateLocationFromWalking(Rectangle walkingCollider)
-		{
-			this.location = new Rectangle(walkingCollider.X - HorizontalWiggleRoom, walkingCollider.Y - (Height / 2), Width, Height);
-			//this.dungeon.UpdateCurrentRoom(this.location);
-		}
-
 		private static Sprite[] GetWalkingSprites(Direction direction)
 		{
 			switch (direction)
@@ -307,6 +289,21 @@ namespace Lozo
 					return WalkingDownSprites;
 			}
 			throw new ArgumentException($"Invalid direction: {direction}");
+		}
+
+		private void SetLocation(Dungeon dungeon, Point center, Direction direction)
+		{
+			this.dungeon = dungeon;
+			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
+			this.dungeon.UpdateCurrentRoom(this.location);
+			this.direction = direction;
+			this.currentSprites = GetWalkingSprites(direction);
+		}
+
+		private void UpdateLocationFromWalking(Rectangle walkingCollider)
+		{
+			var location = new Rectangle(walkingCollider.X - HorizontalWiggleRoom, walkingCollider.Y - (Height / 2), Width, Height);
+			this.SetLocation(this.dungeon, location.Center, this.direction);
 		}
 	}
 }

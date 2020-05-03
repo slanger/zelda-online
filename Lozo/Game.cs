@@ -48,11 +48,9 @@ namespace Lozo
 			this.world.Camera = this.camera;
 			var map = this.Content.Load<TiledMap>("Dungeon");
 			this.mapRenderer = new TiledMapRenderer(this.GraphicsDevice, map);
-			var dungeon = new Dungeon(map, this.mapRenderer);
+			var dungeon = new Dungeon(this.world, map, this.mapRenderer);
 			this.world.Dungeons.Add(dungeon);
-			var startingPoint = new Point(1920, 3000);
-			this.player = new Player(dungeon, startingPoint, Direction.Down);
-			this.camera.LookAt(new Vector2(startingPoint.X, startingPoint.Y));
+			this.player = new Player(dungeon, new Point(1920, 3000), Direction.Down);
 			this.world.Player = this.player;
 			this.debugFont = this.Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(this.GraphicsDevice, 1, 1);

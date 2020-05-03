@@ -10,15 +10,57 @@ namespace Lozo
 {
 	public class Dungeon
 	{
-		Room[,] rooms;
-		Room currentRoom;
+		const string BottomLayerName = "Bottom";
+		const string TopLayerName = "Top";
+		const string CollisionLayerName = "Collision";
+
+		World world;
 		TiledMap map;
 		TiledMapRenderer mapRenderer;
+		Room[,] rooms;
+		Room currentRoom;
 
-		public Dungeon(TiledMap map, TiledMapRenderer mapRenderer)
+		public Dungeon(World world, TiledMap map, TiledMapRenderer mapRenderer)
 		{
+			this.world = world;
 			this.map = map;
 			this.mapRenderer = mapRenderer;
+			if (map.Width % Room.NumTilesWidth != 0 || map.Height % Room.NumTilesHeight != 0)
+			{
+				throw new ArgumentException(
+					$"Invalid dimensions ({map.Width} x {map.Height}) for map \"{map.Name}\". Map dimensions must be a multiple of ({Room.NumTilesWidth} x {Room.NumTilesHeight}).");
+			}
+			var bottomLayer = map.GetLayer<TiledMapTileLayer>(BottomLayerName);
+			if (bottomLayer == null)
+			{
+				throw new ArgumentException($"Map \"{map.Name}\" doesn't contain a tile layer named \"{BottomLayerName}\"");
+			}
+			this.rooms = new Room[map.Width / Room.NumTilesWidth, map.Height / Room.NumTilesHeight];
+			for (int j = 0; j < this.rooms.GetLength(1); ++j)
+			{
+				for (int i = 0; i < this.rooms.GetLength(0); ++i)
+				{
+					int x = i * Room.NumTilesWidth;
+					int y = j * Room.NumTilesHeight;
+					if (IsRoomEmpty(bottomLayer, x, y)) continue;
+					this.rooms[i, j] = new Room(new Point(i, j));
+				}
+			}
+			var objectLayer = map.GetLayer<TiledMapObjectLayer>(CollisionLayerName);
+			if (objectLayer == null)
+			{
+				throw new ArgumentException($"Map \"{map.Name}\" doesn't contain an object layer named \"{CollisionLayerName}\"");
+			}
+			foreach (TiledMapObject obj in objectLayer.Objects)
+			{
+				Rectangle immovable = new Rectangle((int)obj.Position.X, (int)obj.Position.Y, (int)obj.Size.Width, (int)obj.Size.Height);
+				Room room = this.RoomContains(immovable.Center);
+				if (room == null)
+				{
+					throw new ArgumentException($"Couldn't find room containing object {obj}");
+				}
+				room.Immovables.Add(immovable);
+			}
 		}
 
 		public void Update(KeyboardState state)
@@ -28,56 +70,97 @@ namespace Lozo
 
 		public void DrawBottomLayer(OrthographicCamera camera)
 		{
-			this.mapRenderer.Draw(this.map.GetLayer("Bottom"), camera.GetViewMatrix());
+			this.mapRenderer.Draw(this.map.GetLayer(BottomLayerName), camera.GetViewMatrix());
 		}
 
 		public void DrawTopLayer(OrthographicCamera camera)
 		{
-			this.mapRenderer.Draw(this.map.GetLayer("Top"), camera.GetViewMatrix());
+			this.mapRenderer.Draw(this.map.GetLayer(TopLayerName), camera.GetViewMatrix());
 		}
 
 		public void UpdateCurrentRoom(Rectangle location)
 		{
+			this.SetCurrentRoom(location);
+			this.world.Camera.LookAt(this.currentRoom.BoundingBox().Center.ToVector2());
+		}
+
+		public List<Rectangle> CollidingWith(Rectangle collider)
+		{
+			return this.currentRoom.CollidingWith(collider);
+		}
+
+		private static bool IsRoomEmpty(TiledMapTileLayer layer, int startX, int startY)
+		{
+			for (int y = startY; y < startY + Room.NumTilesHeight; ++y)
+			{
+				for (int x = startX; x < startX + Room.NumTilesWidth; ++x)
+				{
+					// If one tile exists in this Room, then we consider it not empty.
+					TiledMapTile? tile;
+					if (layer.TryGetTile((ushort)x, (ushort)y, out tile))
+					{
+						if (!tile.Value.IsBlank) return false;
+					}
+				}
+			}
+			return true;
+		}
+
+		private Room RoomContains(Point point)
+		{
+			for (int j = 0; j < this.rooms.GetLength(1); ++j)
+			{
+				for (int i = 0; i < this.rooms.GetLength(0); ++i)
+				{
+					if (this.rooms[i, j] != null && this.rooms[i, j].Contains(point))
+						return this.rooms[i, j];
+				}
+			}
+			return null;
+		}
+
+		private void SetCurrentRoom(Rectangle location)
+		{
 			Point center = location.Center;
 			if (this.currentRoom == null)
 			{
-				for (int y = 0; y < this.rooms.GetLength(0); ++y)
+				for (int j = 0; j < this.rooms.GetLength(1); ++j)
 				{
-					for (int x = 0; x < this.rooms.GetLength(1); ++x)
+					for (int i = 0; i < this.rooms.GetLength(0); ++i)
 					{
-						if (this.rooms[y, x].BoundingBox().Contains(center))
+						if (this.rooms[i, j] != null && this.rooms[i, j].Contains(center))
 						{
-							this.currentRoom = this.rooms[y, x];
+							this.currentRoom = this.rooms[i, j];
 							return;
 						}
 					}
 				}
-				throw new ArgumentException($"Player start location is invalid: {location}");
+				throw new ArgumentException($"Player location is invalid: {location}");
 			}
-			Rectangle boundingBox = this.currentRoom.BoundingBox();
-			if (!boundingBox.Contains(center))
+
+			if (!this.currentRoom.Contains(center))
 			{
-				Point dungeonLocation = this.currentRoom.DungeonLocation;
-				Room leftRoom = this.GetRoom(new Point(dungeonLocation.X - 1, dungeonLocation.Y));
-				if (leftRoom != null && leftRoom.BoundingBox().Contains(center))
+				Point dungeonIndex = this.currentRoom.DungeonIndex;
+				Room leftRoom = this.GetRoom(dungeonIndex.X - 1, dungeonIndex.Y);
+				if (leftRoom != null && leftRoom.Contains(center))
 				{
 					this.currentRoom = leftRoom;
 					return;
 				}
-				Room upRoom = this.GetRoom(new Point(dungeonLocation.X, dungeonLocation.Y - 1));
-				if (upRoom != null && upRoom.BoundingBox().Contains(center))
+				Room upRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y - 1);
+				if (upRoom != null && upRoom.Contains(center))
 				{
 					this.currentRoom = upRoom;
 					return;
 				}
-				Room rightRoom = this.GetRoom(new Point(dungeonLocation.X + 1, dungeonLocation.Y));
-				if (rightRoom != null && rightRoom.BoundingBox().Contains(center))
+				Room rightRoom = this.GetRoom(dungeonIndex.X + 1, dungeonIndex.Y);
+				if (rightRoom != null && rightRoom.Contains(center))
 				{
 					this.currentRoom = rightRoom;
 					return;
 				}
-				Room downRoom = this.GetRoom(new Point(dungeonLocation.X, dungeonLocation.Y + 1));
-				if (downRoom != null && downRoom.BoundingBox().Contains(center))
+				Room downRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y + 1);
+				if (downRoom != null && downRoom.Contains(center))
 				{
 					this.currentRoom = downRoom;
 					return;
@@ -87,26 +170,13 @@ namespace Lozo
 			}
 		}
 
-		public List<Rectangle> CollidingWith(Rectangle collider)
+		private Room GetRoom(int i, int j)
 		{
-			return this.currentRoom.CollidingWith(collider);
-		}
-
-		public Point RelativeToCurrentRoom(Point point)
-		{
-			Rectangle boundingBox = this.currentRoom.BoundingBox();
-			return new Point(point.X - boundingBox.X, point.Y - boundingBox.Y);
-		}
-
-		// GetRoom gets the room in the Dungeon based on the given Point, or returns null if one doesn't
-		// exist at the given Point.
-		private Room GetRoom(Point dungeonLocation)
-		{
-			if (dungeonLocation.X < 0 || dungeonLocation.X >= this.rooms.GetLength(1) || dungeonLocation.Y < 0 || dungeonLocation.Y >= this.rooms.GetLength(0))
+			if (i < 0 || i >= this.rooms.GetLength(0) || j < 0 || j >= this.rooms.GetLength(1))
 			{
 				return null;
 			}
-			return this.rooms[dungeonLocation.Y, dungeonLocation.X];
+			return this.rooms[i, j];
 		}
 	}
 }
