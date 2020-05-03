@@ -8,19 +8,17 @@ namespace Lozo
 {
 	public class Player
 	{
-		public const int SpriteWidth = 16;
-		public const int SpriteHeight = 16;
-		public const int Width = SpriteWidth * World.Scale;
-		public const int Height = SpriteHeight * World.Scale;
-		const int WalkSpeed = 4; // Based on Scale = 3
+		public const int Width = 48;
+		public const int Height = 48;
+		const int HorizontalWiggleRoom = 3;
+		const int WalkSpeed = 4;
 		const int WalkAnimationSpeed = 6; // Frames per animation key frame
 
-		// When facing left, we use the right textures, but in the Draw() call, we flip the sprites
-		// horizontally.
-		// TODO: Consider flipping the sprites in the sprite sheet instead of at runtime.
+		static readonly Sprite[] WalkingLeftSprites = new[] { new Sprite(SpriteID.WalkLeft1), new Sprite(SpriteID.WalkLeft2) };
 		static readonly Sprite[] WalkingRightSprites = new[] { new Sprite(SpriteID.WalkRight1), new Sprite(SpriteID.WalkRight2) };
 		static readonly Sprite[] WalkingUpSprites = new[] { new Sprite(SpriteID.WalkUp1), new Sprite(SpriteID.WalkUp2) };
 		static readonly Sprite[] WalkingDownSprites = new[] { new Sprite(SpriteID.WalkDown1), new Sprite(SpriteID.WalkDown2) };
+		static readonly Sprite[] AttackingLeftSprites = new[] { new Sprite(SpriteID.AttackLeft1), new Sprite(SpriteID.AttackLeft2), new Sprite(SpriteID.AttackLeft3), new Sprite(SpriteID.AttackLeft4) };
 		static readonly Sprite[] AttackingRightSprites = new[] { new Sprite(SpriteID.AttackRight1), new Sprite(SpriteID.AttackRight2), new Sprite(SpriteID.AttackRight3), new Sprite(SpriteID.AttackRight4) };
 		static readonly Sprite[] AttackingUpSprites = new[] { new Sprite(SpriteID.AttackUp1), new Sprite(SpriteID.AttackUp2), new Sprite(SpriteID.AttackUp3), new Sprite(SpriteID.AttackUp4) };
 		static readonly Sprite[] AttackingDownSprites = new[] { new Sprite(SpriteID.AttackDown1), new Sprite(SpriteID.AttackDown2), new Sprite(SpriteID.AttackDown3), new Sprite(SpriteID.AttackDown4) };
@@ -66,19 +64,7 @@ namespace Lozo
 						this.attacking = false;
 						this.currentSpriteIndex = 0;
 						this.numAnimationFrames = 0;
-						switch (this.direction)
-						{
-							case Direction.Left:
-							case Direction.Right:
-								this.currentSprites = WalkingRightSprites;
-								break;
-							case Direction.Up:
-								this.currentSprites = WalkingUpSprites;
-								break;
-							case Direction.Down:
-								this.currentSprites = WalkingDownSprites;
-								break;
-						}
+						this.currentSprites = GetWalkingSprites(this.direction);
 					}
 				}
 			}
@@ -91,6 +77,8 @@ namespace Lozo
 				switch (this.direction)
 				{
 					case Direction.Left:
+						this.currentSprites = AttackingLeftSprites;
+						break;
 					case Direction.Right:
 						this.currentSprites = AttackingRightSprites;
 						break;
@@ -117,7 +105,7 @@ namespace Lozo
 						break;
 					case Direction.Left:
 						walkingCollider.X -= WalkSpeed;
-						this.currentSprites = WalkingRightSprites;
+						this.currentSprites = WalkingLeftSprites;
 						break;
 					case Direction.Right:
 						walkingCollider.X += WalkSpeed;
@@ -187,25 +175,23 @@ namespace Lozo
 		public void Draw(SpriteBatch spriteBatch)
 		{
 			Sprite currentSprite = this.currentSprites[this.currentSpriteIndex];
-			int originX = SpriteWidth / 2;
-			int originY = SpriteHeight / 2;
+			int originX = 0;
+			int originY = 0;
 			if (this.direction == Direction.Left)
 			{
-				originX = currentSprite.Source.Width - (SpriteWidth / 2);
+				originX = currentSprite.Source.Width - Width;
 			}
 			else if (this.direction == Direction.Up)
 			{
-				originY = currentSprite.Source.Height - (SpriteHeight / 2);
+				originY = currentSprite.Source.Height - Height;
 			}
 			//Point center = this.dungeon.RelativeToCurrentRoom(this.location.Center);
-			Point center = this.location.Center;
 			currentSprite.Draw(
 				spriteBatch,
-				center.X,
-				center.Y,
+				this.location.X,
+				this.location.Y,
 				originX,
-				originY,
-				(this.direction == Direction.Left) ? SpriteEffects.FlipHorizontally : SpriteEffects.None);
+				originY);
 		}
 
 		public Direction? GetMovementDirection(KeyboardState state)
@@ -294,12 +280,16 @@ namespace Lozo
 
 		public Rectangle WalkingCollider()
 		{
-			return new Rectangle(this.location.X + (3 * World.Scale), this.location.Y + (Height / 2), Width - (6 * World.Scale), Height / 2);
+			return new Rectangle(
+				this.location.X + HorizontalWiggleRoom,
+				this.location.Y + (Height / 2),
+				Width - (HorizontalWiggleRoom * 2),
+				Height / 2);
 		}
 
 		private void UpdateLocationFromWalking(Rectangle walkingCollider)
 		{
-			this.location = new Rectangle(walkingCollider.X - (3 * World.Scale), walkingCollider.Y - (Height / 2), Width, Height);
+			this.location = new Rectangle(walkingCollider.X - HorizontalWiggleRoom, walkingCollider.Y - (Height / 2), Width, Height);
 			//this.dungeon.UpdateCurrentRoom(this.location);
 		}
 
@@ -308,6 +298,7 @@ namespace Lozo
 			switch (direction)
 			{
 				case Direction.Left:
+					return WalkingLeftSprites;
 				case Direction.Right:
 					return WalkingRightSprites;
 				case Direction.Up:

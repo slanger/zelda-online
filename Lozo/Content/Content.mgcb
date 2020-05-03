@@ -46,7 +46,7 @@
 #begin Link.png
 /importer:TextureImporter
 /processor:TextureProcessor
-/processorParam:ColorKeyColor=116,116,116,255
+/processorParam:ColorKeyColor=0,128,0,255
 /processorParam:ColorKeyEnabled=True
 /processorParam:GenerateMipmaps=False
 /processorParam:PremultiplyAlpha=True

@@ -9,8 +9,8 @@ namespace Lozo
 	{
 		public const int NumTilesWidth = 16;
 		public const int NumTilesHeight = 11;
-		public const int TileWidth = 16 * World.Scale;
-		public const int TileHeight = 16 * World.Scale;
+		public const int TileWidth = 48;
+		public const int TileHeight = 48;
 		public const int Width = NumTilesWidth * TileWidth;
 		public const int Height = NumTilesHeight * TileHeight;
 

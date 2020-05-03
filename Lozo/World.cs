@@ -7,8 +7,6 @@ namespace Lozo
 {
 	public class World
 	{
-		public const int Scale = 3;
-
 		public List<Dungeon> Dungeons { get; set; } = new List<Dungeon>();
 
 		public Player Player { get; set; }
@@ -31,7 +29,10 @@ namespace Lozo
 				d.DrawBottomLayer(this.Camera);
 			}
 
-			spriteBatch.Begin(transformMatrix: this.Camera.GetViewMatrix(), samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.BackToFront);
+			spriteBatch.Begin(
+				transformMatrix: this.Camera.GetViewMatrix(),
+				samplerState: SamplerState.PointClamp,
+				sortMode: SpriteSortMode.BackToFront);
 			this.Player.Draw(spriteBatch);
 			spriteBatch.End();
 

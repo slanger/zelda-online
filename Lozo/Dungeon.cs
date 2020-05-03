@@ -28,8 +28,6 @@ namespace Lozo
 
 		public void DrawBottomLayer(OrthographicCamera camera)
 		{
-			//this.currentRoom.Draw(spriteBatch);
-			//Matrix.CreateScale(World.Scale)
 			this.mapRenderer.Draw(this.map.GetLayer("Bottom"), camera.GetViewMatrix());
 		}
 
