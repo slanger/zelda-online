@@ -97,6 +97,10 @@ namespace Lozo
 			{
 				this.camera.ZoomOut(0.01f);
 			}
+			if (state.IsKeyDown(Keys.R))
+			{
+				this.camera.Zoom = 1f;
+			}
 
 			this.world.Update(this.state);
 			base.Update(gameTime);
@@ -121,7 +125,7 @@ namespace Lozo
 		private void DrawDebugInfo(GameTime gameTime)
 		{
 			double drawFramerate = 1.0 / gameTime.ElapsedGameTime.TotalSeconds;
-			this.spriteBatch.Begin(transformMatrix: this.camera.GetViewMatrix(), samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.BackToFront);
+			this.spriteBatch.Begin(samplerState: SamplerState.PointClamp, sortMode: SpriteSortMode.BackToFront);
 
 			// Map lines
 			for (int x = 0; x < Room.Width; x += Room.TileWidth)
@@ -163,15 +167,13 @@ namespace Lozo
 				SpriteEffects.None,
 				1f);
 
-			/*
 			// Player's walking collider
 			Rectangle walkingCollider = this.player.WalkingCollider();
-			Point relLocation = this.world.RelativeToCurrentRoom(walkingCollider.Location);
+			Vector2 relLocation = this.camera.WorldToScreen(walkingCollider.Location.ToVector2());
 			this.spriteBatch.Draw(
 				this.debugRect,
-				new Rectangle(relLocation, walkingCollider.Size),
-				new Color(Color.Red, 0.5f));
-			*/
+				new Rectangle(relLocation.ToPoint(), walkingCollider.Size),
+				new Color(Color.Red, 0.3f));
 
 			this.spriteBatch.End();
 		}
