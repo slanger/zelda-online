@@ -1,7 +1,7 @@
 using Lozo;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
+using MonoGame.Extended.Tiled;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -11,24 +11,32 @@ namespace LozoTests
 	{
 		public PlayerTest(ITestOutputHelper output) : base(output) { }
 
-		public World MakeEmptyWorld()
+		private static Player MakeWorldAndPlayer()
 		{
-			Tile[,] tiles = new Tile[Room.NumTilesHeight, Room.NumTilesWidth];
-			for (int y = 0; y < tiles.GetLength(0); ++y)
+			var world = new World();
+			var map = new TiledMap("TestMap", Room.NumTilesWidth, Room.NumTilesHeight, Room.TileWidth, Room.TileHeight, TiledMapTileDrawOrder.RightDown, TiledMapOrientation.Orthogonal);
+			var bottomLayer = new TiledMapTileLayer(Dungeon.BottomLayerName, Room.NumTilesWidth, Room.NumTilesHeight, Room.TileWidth, Room.TileHeight);
+			for (int y = 0; y < bottomLayer.Height; ++y)
 			{
-				for (int x = 0; x < tiles.GetLength(1); ++x)
+				for (int x = 0; x < bottomLayer.Width; ++x)
 				{
-					tiles[y, x] = new Tile(new Rectangle(x * Room.TileWidth, y * Room.TileHeight, Room.TileWidth, Room.TileHeight));
+					bottomLayer.SetTile((ushort)x, (ushort)y, 1);
 				}
 			}
-			var room = new Room(new Point(0, 0), tiles, new List<Rectangle>());
-			return new World(new Room[,] { { room } });
+			map.AddLayer(bottomLayer);
+			var collisionLayer = new TiledMapObjectLayer(Dungeon.CollisionLayerName, new TiledMapObject[0]);
+			map.AddLayer(collisionLayer);
+			var dungeon = new Dungeon(world, map, null);
+			world.Dungeons.Add(dungeon);
+			var player = new Player(dungeon, new Point(Room.Width / 2, Room.Height / 2), Direction.Down);
+			world.Player = player;
+			return player;
 		}
 
 		[Fact]
 		public void MovementWithZeroButtonsPressed()
 		{
-			var player = new Player(MakeEmptyWorld(), new Point(Room.Width / 2, Room.Height / 2));
+			var player = MakeWorldAndPlayer();
 			Direction? direction = player.GetMovementDirection(new KeyboardState());
 			Assert.Null(direction);
 		}
@@ -36,7 +44,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithOneButtonPressed()
 		{
-			var player = new Player(MakeEmptyWorld(), new Point(Room.Width / 2, Room.Height / 2));
+			var player = MakeWorldAndPlayer();
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down));
 			Assert.Equal(Direction.Down, direction);
 			direction = player.GetMovementDirection(new KeyboardState(Keys.Left));
@@ -50,7 +58,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithTwoButtonsPressed()
 		{
-			var player = new Player(MakeEmptyWorld(), new Point(Room.Width / 2, Room.Height / 2));
+			var player = MakeWorldAndPlayer();
 
 			// Buttons cancel each other out.
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down, Keys.Up));
@@ -147,7 +155,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithThreeButtonsPressed()
 		{
-			var player = new Player(MakeEmptyWorld(), new Point(Room.Width / 2, Room.Height / 2));
+			var player = MakeWorldAndPlayer();
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right));
 			Assert.Equal(Direction.Up, direction);
 			direction = player.GetMovementDirection(new KeyboardState(Keys.Up, Keys.Right, Keys.Down));
@@ -161,7 +169,7 @@ namespace LozoTests
 		[Fact]
 		public void MovementWithFourButtonsPressed()
 		{
-			var player = new Player(MakeEmptyWorld(), new Point(Room.Width / 2, Room.Height / 2));
+			var player = MakeWorldAndPlayer();
 			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down));
 			Assert.Null(direction);  // All four directions cancel each other out.
 		}

@@ -4,21 +4,19 @@ using MonoGame.Extended;
 using MonoGame.Extended.Tiled;
 using MonoGame.Extended.Tiled.Renderers;
 using System;
-using System.Collections.Generic;
 
 namespace Lozo
 {
 	public class Dungeon
 	{
-		const string BottomLayerName = "Bottom";
-		const string TopLayerName = "Top";
-		const string CollisionLayerName = "Collision";
+		public const string BottomLayerName = "Bottom";
+		public const string TopLayerName = "Top";
+		public const string CollisionLayerName = "Collision";
 
 		World world;
 		TiledMap map;
 		TiledMapRenderer mapRenderer;
 		Room[,] rooms;
-		Room currentRoom;
 
 		public Dungeon(World world, TiledMap map, TiledMapRenderer mapRenderer)
 		{
@@ -78,15 +76,50 @@ namespace Lozo
 			this.mapRenderer.Draw(this.map.GetLayer(TopLayerName), camera.GetViewMatrix());
 		}
 
-		public void UpdateCurrentRoom(Rectangle location)
+		public Room GetCurrentRoom(Room previous, Rectangle location)
 		{
-			this.SetCurrentRoom(location);
-			this.world.Camera.LookAt(this.currentRoom.BoundingBox().Center.ToVector2());
-		}
+			Point center = location.Center;
+			if (previous == null)
+			{
+				for (int j = 0; j < this.rooms.GetLength(1); ++j)
+				{
+					for (int i = 0; i < this.rooms.GetLength(0); ++i)
+					{
+						if (this.rooms[i, j] != null && this.rooms[i, j].Contains(center))
+						{
+							return this.rooms[i, j];
+						}
+					}
+				}
+				throw new ArgumentException($"Player location is invalid: {location}");
+			}
 
-		public List<Rectangle> CollidingWith(Rectangle collider)
-		{
-			return this.currentRoom.CollidingWith(collider);
+			if (previous.Contains(center))
+			{
+				return previous;
+			}
+			Point dungeonIndex = previous.DungeonIndex;
+			Room leftRoom = this.GetRoom(dungeonIndex.X - 1, dungeonIndex.Y);
+			if (leftRoom != null && leftRoom.Contains(center))
+			{
+				return leftRoom;
+			}
+			Room upRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y - 1);
+			if (upRoom != null && upRoom.Contains(center))
+			{
+				return upRoom;
+			}
+			Room rightRoom = this.GetRoom(dungeonIndex.X + 1, dungeonIndex.Y);
+			if (rightRoom != null && rightRoom.Contains(center))
+			{
+				return rightRoom;
+			}
+			Room downRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y + 1);
+			if (downRoom != null && downRoom.Contains(center))
+			{
+				return downRoom;
+			}
+			throw new ArgumentException($"Player location is invalid: {location}. Previous Room: {previous.DungeonIndex}");
 		}
 
 		private static bool IsRoomEmpty(TiledMapTileLayer layer, int startX, int startY)
@@ -117,57 +150,6 @@ namespace Lozo
 				}
 			}
 			return null;
-		}
-
-		private void SetCurrentRoom(Rectangle location)
-		{
-			Point center = location.Center;
-			if (this.currentRoom == null)
-			{
-				for (int j = 0; j < this.rooms.GetLength(1); ++j)
-				{
-					for (int i = 0; i < this.rooms.GetLength(0); ++i)
-					{
-						if (this.rooms[i, j] != null && this.rooms[i, j].Contains(center))
-						{
-							this.currentRoom = this.rooms[i, j];
-							return;
-						}
-					}
-				}
-				throw new ArgumentException($"Player location is invalid: {location}");
-			}
-
-			if (!this.currentRoom.Contains(center))
-			{
-				Point dungeonIndex = this.currentRoom.DungeonIndex;
-				Room leftRoom = this.GetRoom(dungeonIndex.X - 1, dungeonIndex.Y);
-				if (leftRoom != null && leftRoom.Contains(center))
-				{
-					this.currentRoom = leftRoom;
-					return;
-				}
-				Room upRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y - 1);
-				if (upRoom != null && upRoom.Contains(center))
-				{
-					this.currentRoom = upRoom;
-					return;
-				}
-				Room rightRoom = this.GetRoom(dungeonIndex.X + 1, dungeonIndex.Y);
-				if (rightRoom != null && rightRoom.Contains(center))
-				{
-					this.currentRoom = rightRoom;
-					return;
-				}
-				Room downRoom = this.GetRoom(dungeonIndex.X, dungeonIndex.Y + 1);
-				if (downRoom != null && downRoom.Contains(center))
-				{
-					this.currentRoom = downRoom;
-					return;
-				}
-				// If we can't find a room that contains the new location, then just keep
-				// this.currentRoom the same.
-			}
 		}
 
 		private Room GetRoom(int i, int j)

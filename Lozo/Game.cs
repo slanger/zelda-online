@@ -51,6 +51,7 @@ namespace Lozo
 			this.world.Dungeons.Add(dungeon);
 			this.player = new Player(dungeon, new Point(1920, 3000), Direction.Down);
 			this.world.Player = this.player;
+			this.world.Camera.LookAt(this.player.CurrentRoom.BoundingBox().Center.ToVector2());
 			this.debugFont = this.Content.Load<SpriteFont>("Debug");
 			this.debugRect = new Texture2D(this.GraphicsDevice, 1, 1);
 			this.debugRect.SetData(new[] { Color.White });

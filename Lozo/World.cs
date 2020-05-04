@@ -20,14 +20,12 @@ namespace Lozo
 			{
 				d.Update(state);
 			}
+			this.Camera.LookAt(this.Player.CurrentRoom.BoundingBox().Center.ToVector2());
 		}
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			foreach (Dungeon d in this.Dungeons)
-			{
-				d.DrawBottomLayer(this.Camera);
-			}
+			this.Player.CurrentDungeon.DrawBottomLayer(this.Camera);
 
 			spriteBatch.Begin(
 				transformMatrix: this.Camera.GetViewMatrix(),
@@ -36,10 +34,7 @@ namespace Lozo
 			this.Player.Draw(spriteBatch);
 			spriteBatch.End();
 
-			foreach (Dungeon d in this.Dungeons)
-			{
-				d.DrawTopLayer(this.Camera);
-			}
+			this.Player.CurrentDungeon.DrawTopLayer(this.Camera);
 		}
 	}
 }
