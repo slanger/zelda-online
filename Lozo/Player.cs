@@ -10,7 +10,7 @@ namespace Lozo
 	{
 		public const int Width = 48;
 		public const int Height = 48;
-		const int HorizontalWiggleRoom = 3;
+		const int HorizontalWiggleRoom = 9;
 		const int WalkSpeed = 4;
 		const int WalkAnimationSpeed = 6; // Frames per animation key frame
 
