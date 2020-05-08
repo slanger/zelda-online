@@ -11,8 +11,8 @@ namespace Lozo
 		public const int Width = 48;
 		public const int Height = 48;
 		const int HorizontalWiggleRoom = 9;
-		const int WalkSpeed = 4;
-		const int WalkAnimationSpeed = 6; // Frames per animation key frame
+		const int WalkSpeed = 8; // Pixels per frame
+		const int WalkAnimationSpeed = 3; // Frames per animation key frame
 
 		static readonly Sprite[] WalkingLeftSprites = new[] { new Sprite(SpriteID.WalkLeft1), new Sprite(SpriteID.WalkLeft2) };
 		static readonly Sprite[] WalkingRightSprites = new[] { new Sprite(SpriteID.WalkRight1), new Sprite(SpriteID.WalkRight2) };
@@ -22,13 +22,14 @@ namespace Lozo
 		static readonly Sprite[] AttackingRightSprites = new[] { new Sprite(SpriteID.AttackRight1), new Sprite(SpriteID.AttackRight2), new Sprite(SpriteID.AttackRight3), new Sprite(SpriteID.AttackRight4) };
 		static readonly Sprite[] AttackingUpSprites = new[] { new Sprite(SpriteID.AttackUp1), new Sprite(SpriteID.AttackUp2), new Sprite(SpriteID.AttackUp3), new Sprite(SpriteID.AttackUp4) };
 		static readonly Sprite[] AttackingDownSprites = new[] { new Sprite(SpriteID.AttackDown1), new Sprite(SpriteID.AttackDown2), new Sprite(SpriteID.AttackDown3), new Sprite(SpriteID.AttackDown4) };
-		static readonly int[] AttackFramesPerKeyFrame = new[] { 4, 8, 1, 1 };
+		static readonly int[] AttackFramesPerKeyFrame = new[] { 2, 4, 1, 1 };
 
 		public Dungeon CurrentDungeon { get; private set; }
 
 		public Room CurrentRoom { get; private set; }
 
 		Rectangle location;
+		Rectangle prevLocation;
 		int dX;
 		int dY;
 		Direction direction;
@@ -38,14 +39,19 @@ namespace Lozo
 		Sprite[] currentSprites;
 		int currentSpriteIndex;
 		int numAnimationFrames;
+		bool updateThrottled = true;
 
 		public Player(Dungeon currentDungeon, Point center, Direction facingDirection)
 		{
 			this.SetLocation(currentDungeon, center, facingDirection);
+			this.prevLocation = this.location;
 		}
 
 		public void Update(KeyboardState state)
 		{
+			this.updateThrottled = !this.updateThrottled;
+			if (this.updateThrottled) return;
+
 			if (this.attacking)
 			{
 				this.numAnimationFrames++;
@@ -68,6 +74,7 @@ namespace Lozo
 				this.attackButtonPressed = true;
 				this.currentSpriteIndex = 0;
 				this.numAnimationFrames = 0;
+				this.prevLocation = this.location;
 				switch (this.direction)
 				{
 					case Direction.Left:
@@ -177,10 +184,15 @@ namespace Lozo
 			{
 				originY = currentSprite.Source.Height - Height;
 			}
+			Point loc = this.location.Location;
+			if (!this.updateThrottled)
+			{
+				loc = new Point((this.prevLocation.X + this.location.X) / 2, (this.prevLocation.Y + this.location.Y) / 2);
+			}
 			currentSprite.Draw(
 				spriteBatch,
-				this.location.X,
-				this.location.Y,
+				loc.X,
+				loc.Y,
 				originX,
 				originY);
 		}
@@ -297,6 +309,7 @@ namespace Lozo
 		private void SetLocation(Dungeon dungeon, Point center, Direction direction)
 		{
 			this.CurrentDungeon = dungeon;
+			this.prevLocation = this.location;
 			this.location = new Rectangle(center.X - (Width / 2), center.Y - (Height / 2), Width, Height);
 			this.CurrentRoom = dungeon.GetCurrentRoom(this.CurrentRoom, this.location);
 			this.direction = direction;

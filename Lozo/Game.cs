@@ -5,6 +5,7 @@ using MonoGame.Extended;
 using MonoGame.Extended.Tiled;
 using MonoGame.Extended.Tiled.Renderers;
 using MonoGame.Extended.ViewportAdapters;
+using System;
 
 namespace Lozo
 {
@@ -35,6 +36,7 @@ namespace Lozo
 			this.graphics.ApplyChanges();
 			this.Content.RootDirectory = "Content";
 			this.IsMouseVisible = true;
+			//this.TargetElapsedTime = TimeSpan.FromSeconds(1d / 30d);
 		}
 
 		protected override void LoadContent()

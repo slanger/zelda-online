@@ -25,16 +25,23 @@ namespace Lozo
 
 		public void Draw(SpriteBatch spriteBatch)
 		{
-			this.Player.CurrentDungeon.DrawBottomLayer(this.Camera);
-
 			spriteBatch.Begin(
 				transformMatrix: this.Camera.GetViewMatrix(),
-				samplerState: SamplerState.PointClamp,
-				sortMode: SpriteSortMode.BackToFront);
+				samplerState: SamplerState.PointClamp);
+			this.Player.CurrentDungeon.DrawBottomLayer(this.Camera);
+			spriteBatch.End();
+
+			spriteBatch.Begin(
+				transformMatrix: this.Camera.GetViewMatrix());
+				//samplerState: SamplerState.PointClamp);
 			this.Player.Draw(spriteBatch);
 			spriteBatch.End();
 
+			spriteBatch.Begin(
+				transformMatrix: this.Camera.GetViewMatrix(),
+				samplerState: SamplerState.PointClamp);
 			this.Player.CurrentDungeon.DrawTopLayer(this.Camera);
+			spriteBatch.End();
 		}
 	}
 }
