@@ -86,7 +86,7 @@ namespace Lozo
 			this.ID = id;
 		}
 
-		public void Draw(SpriteBatch spriteBatch, int x, int y, int originX = 0, int originY = 0, float alpha = 1f, SpriteEffects effects = SpriteEffects.None)
+		public void Draw(SpriteBatch spriteBatch, int x, int y, int originX = 0, int originY = 0, SpriteEffects effects = SpriteEffects.None)
 		{
 			(string key, Rectangle source) = SpriteMap[this.ID];
 			Texture2D spritesheet = SpriteSheetMap[key];
@@ -94,7 +94,7 @@ namespace Lozo
 				spritesheet,
 				new Vector2(x, y),
 				source,
-				new Color(Color.White, alpha),
+				Color.White,
 				0f,
 				new Vector2(originX, originY),
 				1f,
