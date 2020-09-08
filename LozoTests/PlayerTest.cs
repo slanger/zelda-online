@@ -2,6 +2,7 @@ using Lozo;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.Tiled;
+using System;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -33,145 +34,160 @@ namespace LozoTests
 			return player;
 		}
 
+		private static void UpdateAndAssert(Player player, KeyboardState state, Direction? expectedDirection)
+		{
+			Rectangle oldLocation = player.Location;
+			Direction oldDirection = player.Direction;
+			player.Update(state);
+			switch (expectedDirection)
+			{
+				case Direction.Left:
+					Assert.Equal(Direction.Left, player.Direction);
+					Assert.Equal(new Rectangle(new Point(oldLocation.X - Player.WalkSpeed, oldLocation.Y), oldLocation.Size), player.Location);
+					break;
+				case Direction.Right:
+					Assert.Equal(Direction.Right, player.Direction);
+					Assert.Equal(new Rectangle(new Point(oldLocation.X + Player.WalkSpeed, oldLocation.Y), oldLocation.Size), player.Location);
+					break;
+				case Direction.Up:
+					Assert.Equal(Direction.Up, player.Direction);
+					Assert.Equal(new Rectangle(new Point(oldLocation.X, oldLocation.Y - Player.WalkSpeed), oldLocation.Size), player.Location);
+					break;
+				case Direction.Down:
+					Assert.Equal(Direction.Down, player.Direction);
+					Assert.Equal(new Rectangle(new Point(oldLocation.X, oldLocation.Y + Player.WalkSpeed), oldLocation.Size), player.Location);
+					break;
+				case null:
+					Assert.Equal(oldDirection, player.Direction);
+					Assert.Equal(oldLocation, player.Location);
+					break;
+				default:
+					throw new ArgumentException($"Invalid direction: {expectedDirection}");
+			}
+		}
+
 		[Fact]
 		public void MovementWithZeroButtonsPressed()
 		{
-			var player = MakeWorldAndPlayer();
-			Direction? direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
+			Player player = MakeWorldAndPlayer();
+			UpdateAndAssert(player, new KeyboardState(), null);
 		}
 
 		[Fact]
 		public void MovementWithOneButtonPressed()
 		{
-			var player = MakeWorldAndPlayer();
-			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down));
-			Assert.Equal(Direction.Down, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Up));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right));
-			Assert.Equal(Direction.Right, direction);
+			Player player = MakeWorldAndPlayer();
+			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 		}
 
 		[Fact]
 		public void MovementWithTwoButtonsPressed()
 		{
-			var player = MakeWorldAndPlayer();
+			Player player = MakeWorldAndPlayer();
 
 			// Buttons cancel each other out.
-			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Down, Keys.Up));
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Right));
-			Assert.Null(direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Down, Keys.Up), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Right), null);
 
 			// Zero buttons pressed, then two buttons pressed--horizontal keys take precedence.
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Down));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Up));
-			Assert.Equal(Direction.Right, direction);
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Down));
-			Assert.Equal(Direction.Right, direction);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
 			// One button pressed, then two buttons pressed.
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right));
-			Assert.Equal(Direction.Right, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Up));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Up));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right));
-			Assert.Equal(Direction.Right, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Down));
-			Assert.Equal(Direction.Down, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Down));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Down));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Down));
-			Assert.Equal(Direction.Down, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Up));
-			Assert.Equal(Direction.Up, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+
+			// One button pressed, then two buttons pressed again, but with more frames in between.
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+
+			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+
+			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
 			// Two buttons pressed, then two other buttons pressed.
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Down));
-			Assert.Equal(Direction.Right, direction);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Down));
-			Assert.Equal(Direction.Down, direction);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Down);
 
-			direction = player.GetMovementDirection(new KeyboardState());
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Up));
-			Assert.Equal(Direction.Right, direction);
+			UpdateAndAssert(player, new KeyboardState(), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
 
 			// Three buttons pressed, then two buttons pressed.
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
 
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Down, Keys.Right));
-			Assert.Equal(Direction.Right, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
+
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
 			// Four buttons pressed, then two buttons pressed.
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down));
-			Assert.Null(direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
 		}
 
 		[Fact]
 		public void MovementWithThreeButtonsPressed()
 		{
-			var player = MakeWorldAndPlayer();
-			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right));
-			Assert.Equal(Direction.Up, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Up, Keys.Right, Keys.Down));
-			Assert.Equal(Direction.Right, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Right, Keys.Down, Keys.Left));
-			Assert.Equal(Direction.Down, direction);
-			direction = player.GetMovementDirection(new KeyboardState(Keys.Down, Keys.Left, Keys.Up));
-			Assert.Equal(Direction.Left, direction);
+			Player player = MakeWorldAndPlayer();
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			UpdateAndAssert(player, new KeyboardState(Keys.Up, Keys.Right, Keys.Down), Direction.Right);
+			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down, Keys.Left), Direction.Down);
+			UpdateAndAssert(player, new KeyboardState(Keys.Down, Keys.Left, Keys.Up), Direction.Left);
 		}
 
 		[Fact]
 		public void MovementWithFourButtonsPressed()
 		{
-			var player = MakeWorldAndPlayer();
-			Direction? direction = player.GetMovementDirection(new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down));
-			Assert.Null(direction);  // All four directions cancel each other out.
+			Player player = MakeWorldAndPlayer();
+			// All four directions cancel each other out.
+			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
 		}
+
+		// TODO: Test collision.
+
+		// TODO: Test trying to walk while attacking.
+
+		// TODO: Test animation?
 	}
 }
