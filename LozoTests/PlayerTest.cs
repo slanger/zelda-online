@@ -46,8 +46,8 @@ namespace LozoTests
 			return player;
 		}
 
-		// This method assumes that the movement will be unhindered by any collidables.
-		private static void UpdateAndAssert(Player player, KeyboardState state, Direction? expectedDirection)
+		// This method assumes that the player won't be stopped by any immovables.
+		private static void MoveAndAssert(Player player, KeyboardState state, Direction? expectedDirection)
 		{
 			Rectangle oldLocation = player.Location;
 			Direction oldDirection = player.Direction;
@@ -79,21 +79,30 @@ namespace LozoTests
 			}
 		}
 
+		// This method assumes that the player won't move due to immovables in the way.
+		private static void HinderedMoveAndAssert(Player player, KeyboardState state, Direction expectedDirection)
+		{
+			Rectangle oldLocation = player.Location;
+			player.Update(state);
+			Assert.Equal(expectedDirection, player.Direction);
+			Assert.Equal(oldLocation, player.Location);
+		}
+
 		[Fact]
 		public void MovementWithZeroButtonsPressed()
 		{
 			Player player = MakeWorldAndPlayer();
-			UpdateAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(), null);
 		}
 
 		[Fact]
 		public void MovementWithOneButtonPressed()
 		{
 			Player player = MakeWorldAndPlayer();
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 		}
 
 		[Fact]
@@ -102,91 +111,91 @@ namespace LozoTests
 			Player player = MakeWorldAndPlayer();
 
 			// Buttons cancel each other out.
-			UpdateAndAssert(player, new KeyboardState(Keys.Down, Keys.Up), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Right), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Down, Keys.Up), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Right), null);
 
 			// Zero buttons pressed, then two buttons pressed--horizontal keys take precedence.
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
 			// One button pressed, then two buttons pressed.
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 
 			// One button pressed, then two buttons pressed again, but with more frames in between.
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
 			// Two buttons pressed, then two other buttons pressed.
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Down), Direction.Down);
 
-			UpdateAndAssert(player, new KeyboardState(), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Up), Direction.Right);
 
 			// Three buttons pressed, then two buttons pressed.
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Up);
 
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Down), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Down), Direction.Right);
 
 			// Four buttons pressed, then two buttons pressed.
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up), Direction.Left);
 		}
 
 		[Fact]
 		public void MovementWithThreeButtonsPressed()
 		{
 			Player player = MakeWorldAndPlayer();
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up, Keys.Right, Keys.Down), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right, Keys.Down, Keys.Left), Direction.Down);
-			UpdateAndAssert(player, new KeyboardState(Keys.Down, Keys.Left, Keys.Up), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Up, Keys.Right, Keys.Down), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Right, Keys.Down, Keys.Left), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Down, Keys.Left, Keys.Up), Direction.Left);
 		}
 
 		[Fact]
@@ -194,7 +203,7 @@ namespace LozoTests
 		{
 			Player player = MakeWorldAndPlayer();
 			// All four directions cancel each other out.
-			UpdateAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
+			MoveAndAssert(player, new KeyboardState(Keys.Left, Keys.Up, Keys.Right, Keys.Down), null);
 		}
 
 		[Fact]
@@ -206,61 +215,49 @@ namespace LozoTests
 
 			// Put an immovable below the player and check that the immovable stops the player.
 			player = MakeWorldAndPlayer(new Rectangle(startingLocation.X, startingCollider.Bottom, ImmovableWidth, ImmovableHeight));
-			Rectangle oldLocation = player.Location;
-			player.Update(new KeyboardState(Keys.Down));
-			Assert.Equal(Direction.Down, player.Direction);
-			Assert.Equal(oldLocation, player.Location);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
 			// Check that the player can still move in other directions.
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 
 			// Same as above, but with the immovable *above* the player. Note that because of the
 			// shape of the walking collider, the immovable will actually be placed inside the
 			// player's sprite (but outside the walking collider).
 			player = MakeWorldAndPlayer(new Rectangle(startingLocation.X, startingCollider.Top - ImmovableHeight, ImmovableWidth, ImmovableHeight));
-			oldLocation = player.Location;
-			player.Update(new KeyboardState(Keys.Up));
-			Assert.Equal(Direction.Up, player.Direction);
-			Assert.Equal(oldLocation, player.Location);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
 
 			// Same as above, but with the immovable to the right of the player.
 			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right, startingLocation.Y, ImmovableWidth, ImmovableHeight));
-			oldLocation = player.Location;
-			player.Update(new KeyboardState(Keys.Right));
-			Assert.Equal(Direction.Right, player.Direction);
-			Assert.Equal(oldLocation, player.Location);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
 
 			// Same as above, but with the immovable to the left of the player.
 			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - ImmovableWidth, startingLocation.Y, ImmovableWidth, ImmovableHeight));
-			oldLocation = player.Location;
-			player.Update(new KeyboardState(Keys.Left));
-			Assert.Equal(Direction.Left, player.Direction);
-			Assert.Equal(oldLocation, player.Location);
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 
 			// Now check that the player can move in the opposite direction immediately after
 			// colliding with an immovable.
 			player = MakeWorldAndPlayer(new Rectangle(startingLocation.X, startingCollider.Bottom, ImmovableWidth, ImmovableHeight));
-			player.Update(new KeyboardState(Keys.Down));
-			UpdateAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
 			player = MakeWorldAndPlayer(new Rectangle(startingLocation.X, startingCollider.Top - ImmovableHeight, ImmovableWidth, ImmovableHeight));
-			player.Update(new KeyboardState(Keys.Up));
-			UpdateAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
 			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right, startingLocation.Y, ImmovableWidth, ImmovableHeight));
-			player.Update(new KeyboardState(Keys.Right));
-			UpdateAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
 			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - ImmovableWidth, startingLocation.Y, ImmovableWidth, ImmovableHeight));
-			player.Update(new KeyboardState(Keys.Left));
-			UpdateAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
 		}
 
 		// TODO: Add test for walking into multiple immovables.
