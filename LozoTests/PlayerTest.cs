@@ -49,43 +49,43 @@ namespace LozoTests
 		// This method assumes that the player won't be stopped by any immovables.
 		private static void MoveAndAssert(Player player, KeyboardState state, Direction? expectedDirection)
 		{
-			Rectangle oldLocation = player.Location;
-			Direction oldDirection = player.Direction;
-			player.Update(state);
+			Point offset;
 			switch (expectedDirection)
 			{
 				case Direction.Left:
-					Assert.Equal(Direction.Left, player.Direction);
-					Assert.Equal(new Rectangle(new Point(oldLocation.X - Player.WalkSpeed, oldLocation.Y), oldLocation.Size), player.Location);
+					offset = new Point(-Player.WalkSpeed, 0);
 					break;
 				case Direction.Right:
-					Assert.Equal(Direction.Right, player.Direction);
-					Assert.Equal(new Rectangle(new Point(oldLocation.X + Player.WalkSpeed, oldLocation.Y), oldLocation.Size), player.Location);
+					offset = new Point(Player.WalkSpeed, 0);
 					break;
 				case Direction.Up:
-					Assert.Equal(Direction.Up, player.Direction);
-					Assert.Equal(new Rectangle(new Point(oldLocation.X, oldLocation.Y - Player.WalkSpeed), oldLocation.Size), player.Location);
+					offset = new Point(0, -Player.WalkSpeed);
 					break;
 				case Direction.Down:
-					Assert.Equal(Direction.Down, player.Direction);
-					Assert.Equal(new Rectangle(new Point(oldLocation.X, oldLocation.Y + Player.WalkSpeed), oldLocation.Size), player.Location);
+					offset = new Point(0, Player.WalkSpeed);
 					break;
 				case null:
-					Assert.Equal(oldDirection, player.Direction);
-					Assert.Equal(oldLocation, player.Location);
+					offset = new Point(0, 0);
 					break;
 				default:
 					throw new ArgumentException($"Invalid direction: {expectedDirection}");
 			}
+			Direction direction = expectedDirection == null ? player.Direction : expectedDirection.Value;
+			MoveWithOffsetAndAssert(player, state, offset, direction);
 		}
 
 		// This method assumes that the player won't move due to immovables in the way.
 		private static void HinderedMoveAndAssert(Player player, KeyboardState state, Direction expectedDirection)
 		{
+			MoveWithOffsetAndAssert(player, state, new Point(0, 0), expectedDirection);
+		}
+
+		private static void MoveWithOffsetAndAssert(Player player, KeyboardState state, Point expectedOffset, Direction expectedDirection)
+		{
 			Rectangle oldLocation = player.Location;
 			player.Update(state);
 			Assert.Equal(expectedDirection, player.Direction);
-			Assert.Equal(oldLocation, player.Location);
+			Assert.Equal(new Rectangle(oldLocation.Location + expectedOffset, oldLocation.Size), player.Location);
 		}
 
 		[Fact]
@@ -258,9 +258,119 @@ namespace LozoTests
 			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - ImmovableWidth, startingLocation.Y, ImmovableWidth, ImmovableHeight));
 			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
 			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+
+			// Check that the player can be stopped by a tiny immovable.
+			player = MakeWorldAndPlayer(new Rectangle(startingLocation.Center.X, startingCollider.Bottom, 1, 1));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			player = MakeWorldAndPlayer(new Rectangle(startingLocation.Center.X, startingCollider.Top - 1, 1, 1));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right, startingLocation.Center.Y, 1, 1));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - 1, startingLocation.Center.Y, 1, 1));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+
+			// Check that the player can be stopped by a large immovable.
+			player = MakeWorldAndPlayer(new Rectangle(0, startingCollider.Bottom, Room.Width, Room.Height - startingCollider.Bottom));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			player = MakeWorldAndPlayer(new Rectangle(0, 0, Room.Width, startingCollider.Top));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right, 0, Room.Width - startingCollider.Right, Room.Height));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			player = MakeWorldAndPlayer(new Rectangle(0, 0, startingCollider.Left, Room.Height));
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+
+			// Check that the player is stopped by an immovable 1 pixel away and by an immovable
+			// Player.WalkSpeed-1 pixels away. Also, check that the player is *not* stopped by an
+			// immovable Player.WalkSpeed pixels away (which is another way of saying that the
+			// player should move the full Player.WalkSpeed pixels distance).
+			foreach (int offset in new int[] { 1, Player.WalkSpeed - 1, Player.WalkSpeed })
+			{
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left, startingCollider.Bottom + offset, ImmovableWidth, ImmovableHeight));
+				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, offset), Direction.Down);
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left, startingCollider.Top - ImmovableHeight - offset, ImmovableWidth, ImmovableHeight));
+				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, -offset), Direction.Up);
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right + offset, startingCollider.Top, ImmovableWidth, ImmovableHeight));
+				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(offset, 0), Direction.Right);
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - ImmovableWidth - offset, startingCollider.Top, ImmovableWidth, ImmovableHeight));
+				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-offset, 0), Direction.Left);
+			}
 		}
 
-		// TODO: Add test for walking into multiple immovables.
+		[Fact]
+		public void MovementWithMultipleImmovables()
+		{
+			Player player = MakeWorldAndPlayer();
+			Rectangle startingCollider = player.WalkingCollider();
+
+			// Put two immovables together so that the player will collide with both simultaneously
+			// and check that they stop the player.
+			var immovableA = new Rectangle(startingCollider.Center.X - ImmovableWidth, startingCollider.Bottom + 1, ImmovableWidth, ImmovableHeight);
+			var immovableB = new Rectangle(startingCollider.Center.X, startingCollider.Bottom + 1, ImmovableWidth, ImmovableHeight);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 1), Direction.Down);
+			// Check that the player can still move in other directions.
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+
+			// Stagger the two immovables, and check that the player is stopped by the closer
+			// immovable.
+			immovableB.Y += 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 1), Direction.Down);
+			// Swap the order of the two immovables and check again.
+			immovableB.Y -= 1;
+			immovableA.Y += 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 1), Direction.Down);
+
+			// Do the same tests above, but in the other three directions.
+
+			immovableA = new Rectangle(startingCollider.Center.X - ImmovableWidth, startingCollider.Top - ImmovableHeight - 1, ImmovableWidth, ImmovableHeight);
+			immovableB = new Rectangle(startingCollider.Center.X, startingCollider.Top - ImmovableHeight - 1, ImmovableWidth, ImmovableHeight);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, -1), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			immovableB.Y -= 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, -1), Direction.Up);
+			immovableB.Y += 1;
+			immovableA.Y -= 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, -1), Direction.Up);
+
+			immovableA = new Rectangle(startingCollider.Right + 1, startingCollider.Center.Y - ImmovableHeight, ImmovableWidth, ImmovableHeight);
+			immovableB = new Rectangle(startingCollider.Right + 1, startingCollider.Center.Y, ImmovableWidth, ImmovableHeight);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(1, 0), Direction.Right);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			immovableB.X += 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(1, 0), Direction.Right);
+			immovableB.Y -= 1;
+			immovableA.Y += 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(1, 0), Direction.Right);
+
+			immovableA = new Rectangle(startingCollider.Left - ImmovableWidth - 1, startingCollider.Center.Y - ImmovableHeight, ImmovableWidth, ImmovableHeight);
+			immovableB = new Rectangle(startingCollider.Left - ImmovableWidth - 1, startingCollider.Center.Y, ImmovableWidth, ImmovableHeight);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-1, 0), Direction.Left);
+			MoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			MoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			MoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			immovableB.X -= 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-1, 0), Direction.Left);
+			immovableB.Y += 1;
+			immovableA.Y -= 1;
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-1, 0), Direction.Left);
+		}
 
 		// TODO: Test trying to walk while attacking.
 
