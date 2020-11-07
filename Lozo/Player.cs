@@ -8,12 +8,17 @@ namespace Lozo
 {
 	public class Player
 	{
-		public const int Width = 48;
-		public const int Height = 48;
-		public const int WalkSpeed = 4; // Pixels per frame
+		public const int Width = 48;  // pixels
+		public const int Height = 48;  // pixels
+		public const int WalkSpeed = 4;  // pixels per frame
 
-		const int WalkAnimationSpeed = 6; // Frames per animation key frame
-		const int HorizontalWiggleRoom = 9; // Creates extra buffer for player to squeeze through openings.
+		const int HorizontalWiggleRoom = 9;  // extra buffer for player to squeeze through openings
+		const int WalkingColliderOffsetX = HorizontalWiggleRoom;
+		const int WalkingColliderOffsetY = Height / 2;
+		const int WalkingColldierWidth = Width - (HorizontalWiggleRoom * 2);
+		const int WalkingColliderHeight = Height / 2;
+
+		const int WalkAnimationSpeed = 6;  // frames per animation key frame
 
 		static readonly Sprite[] WalkingLeftSprites = new[] { new Sprite(SpriteID.WalkLeft1), new Sprite(SpriteID.WalkLeft2) };
 		static readonly Sprite[] WalkingRightSprites = new[] { new Sprite(SpriteID.WalkRight1), new Sprite(SpriteID.WalkRight2) };
@@ -98,7 +103,7 @@ namespace Lozo
 				Direction oldDirection = this.Direction;
 				switch (this.GetMovementDirection(state))
 				{
-					case null: // Not moving
+					case null:  // not moving
 						break;
 					case Direction.Left:
 						walkingCollider.X -= WalkSpeed;
@@ -122,22 +127,22 @@ namespace Lozo
 				{
 					case Direction.Left:
 						foreach (Rectangle c in collided)
-							walkingCollider.X = MathHelper.Max(walkingCollider.X, c.Right);
+							walkingCollider.X = Math.Max(walkingCollider.X, c.Right);
 						break;
 					case Direction.Right:
 						int rightX = walkingCollider.Right;
 						foreach (Rectangle c in collided)
-							rightX = MathHelper.Min(rightX, c.X);
+							rightX = Math.Min(rightX, c.X);
 						walkingCollider.X = rightX - walkingCollider.Width;
 						break;
 					case Direction.Up:
 						foreach (Rectangle c in collided)
-							walkingCollider.Y = MathHelper.Max(walkingCollider.Y, c.Bottom);
+							walkingCollider.Y = Math.Max(walkingCollider.Y, c.Bottom);
 						break;
 					case Direction.Down:
 						int bottomY = walkingCollider.Bottom;
 						foreach (Rectangle c in collided)
-							bottomY = MathHelper.Min(bottomY, c.Y);
+							bottomY = Math.Min(bottomY, c.Y);
 						walkingCollider.Y = bottomY - walkingCollider.Height;
 						break;
 				}
@@ -191,10 +196,8 @@ namespace Lozo
 		public Rectangle WalkingCollider()
 		{
 			return new Rectangle(
-				this.Location.X + HorizontalWiggleRoom,
-				this.Location.Y + (Height / 2),
-				Width - (HorizontalWiggleRoom * 2),
-				Height / 2);
+				this.Location.X + WalkingColliderOffsetX, this.Location.Y + WalkingColliderOffsetY,
+				WalkingColldierWidth, WalkingColliderHeight);
 		}
 
 		private static Sprite[] GetWalkingSprites(Direction direction)
@@ -308,7 +311,8 @@ namespace Lozo
 
 		private void UpdateLocationFromWalking(Rectangle walkingCollider)
 		{
-			var location = new Rectangle(walkingCollider.X - HorizontalWiggleRoom, walkingCollider.Y - (Height / 2), Width, Height);
+			var location = new Rectangle(
+				walkingCollider.X - WalkingColliderOffsetX, walkingCollider.Y - WalkingColliderOffsetY, Width, Height);
 			this.SetLocation(this.CurrentDungeon, location.Center, this.Direction);
 		}
 	}
