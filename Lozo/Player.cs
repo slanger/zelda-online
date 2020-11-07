@@ -12,11 +12,13 @@ namespace Lozo
 		public const int Height = 48;  // pixels
 		public const int WalkSpeed = 4;  // pixels per frame
 
-		const int HorizontalWiggleRoom = 9;  // extra buffer for player to squeeze through openings
-		const int WalkingColliderOffsetX = HorizontalWiggleRoom;
+		const int WalkingColliderOffsetX = 0;
 		const int WalkingColliderOffsetY = Height / 2;
-		const int WalkingColldierWidth = Width - (HorizontalWiggleRoom * 2);
+		const int WalkingColldierWidth = Width;
 		const int WalkingColliderHeight = Height / 2;
+		// These values are used to slide around corners.
+		const int CornerSlideWidth = 16;  // pixels
+		const int CornerSlideHeight = 8;  // pixels
 
 		const int WalkAnimationSpeed = 6;  // frames per animation key frame
 
@@ -100,6 +102,7 @@ namespace Lozo
 				}
 
 				Rectangle walkingCollider = this.WalkingCollider();
+				Rectangle oldLocation = walkingCollider;  // makes a copy
 				Direction oldDirection = this.Direction;
 				switch (this.GetMovementDirection(state))
 				{
@@ -122,6 +125,7 @@ namespace Lozo
 						this.currentSprites = WalkingDownSprites;
 						break;
 				}
+				Rectangle newLocation = walkingCollider;  // makes a copy
 				List<Rectangle> collided = this.CurrentRoom.CollidingWith(walkingCollider);
 				switch (this.Direction)
 				{
@@ -145,6 +149,84 @@ namespace Lozo
 							bottomY = Math.Min(bottomY, c.Y);
 						walkingCollider.Y = bottomY - walkingCollider.Height;
 						break;
+				}
+				if (walkingCollider == oldLocation && collided.Count > 0)
+				{
+					switch (this.Direction)
+					{
+						case Direction.Left:
+						case Direction.Right:
+							{
+								var topEdge = new Rectangle(newLocation.X, newLocation.Y, newLocation.Width, CornerSlideHeight);
+								var middle = new Rectangle(newLocation.X, newLocation.Y + CornerSlideHeight,
+									newLocation.Width, newLocation.Height - (CornerSlideHeight * 2));
+								var bottomEdge = new Rectangle(newLocation.X, middle.Y + middle.Height, newLocation.Width, CornerSlideHeight);
+								Rectangle? topCollided = null;
+								Rectangle? bottomCollided = null;
+								bool middleCollision = false;
+								foreach (Rectangle c in collided)
+								{
+									if (c.Intersects(middle))
+									{
+										middleCollision = true;
+										break;
+									}
+									if (c.Intersects(topEdge))
+									{
+										if (topCollided == null || c.Bottom > topCollided.Value.Bottom)
+											topCollided = c;
+									}
+									if (c.Intersects(bottomEdge))
+									{
+										if (bottomCollided == null || c.Top < bottomCollided.Value.Top)
+											bottomCollided = c;
+									}
+								}
+								if (middleCollision || (topCollided != null && bottomCollided != null))
+									break;
+								if (topCollided != null)
+									walkingCollider.Y = Math.Min(walkingCollider.Top + WalkSpeed, topCollided.Value.Bottom);
+								if (bottomCollided != null)
+									walkingCollider.Y = Math.Max(walkingCollider.Bottom - WalkSpeed, bottomCollided.Value.Top) - walkingCollider.Height;
+								break;
+							}
+						case Direction.Up:
+						case Direction.Down:
+							{
+								var leftEdge = new Rectangle(newLocation.X, newLocation.Y, CornerSlideWidth, newLocation.Height);
+								var middle = new Rectangle(newLocation.X + CornerSlideWidth, newLocation.Y,
+									newLocation.Width - (CornerSlideWidth * 2), newLocation.Height);
+								var rightEdge = new Rectangle(middle.X + middle.Width, newLocation.Y, CornerSlideWidth, newLocation.Height);
+								Rectangle? leftCollided = null;
+								Rectangle? rightCollided = null;
+								bool middleCollision = false;
+								foreach (Rectangle c in collided)
+								{
+									if (c.Intersects(middle))
+									{
+										middleCollision = true;
+										break;
+									}
+									if (c.Intersects(leftEdge))
+									{
+										if (leftCollided == null || c.Right > leftCollided.Value.Right)
+											leftCollided = c;
+									}
+									if (c.Intersects(rightEdge))
+									{
+										if (rightCollided == null || c.Left < rightCollided.Value.Left)
+											rightCollided = c;
+									}
+								}
+								if (middleCollision || (leftCollided != null && rightCollided != null))
+									break;
+								if (leftCollided != null)
+									walkingCollider.X = Math.Min(walkingCollider.Left + WalkSpeed, leftCollided.Value.Right);
+								if (rightCollided != null)
+									walkingCollider.X = Math.Max(walkingCollider.Right - WalkSpeed, rightCollided.Value.Left) - walkingCollider.Width;
+								break;
+							}
+					}
 				}
 				this.UpdateLocationFromWalking(walkingCollider);
 

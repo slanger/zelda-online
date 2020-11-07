@@ -372,6 +372,8 @@ namespace LozoTests
 			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-1, 0), Direction.Left);
 		}
 
+		// TODO: Test sliding around corners.
+
 		// TODO: Test trying to walk while attacking.
 
 		// TODO: Test animation?
