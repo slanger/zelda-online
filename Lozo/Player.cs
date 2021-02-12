@@ -152,6 +152,9 @@ namespace Lozo
 				}
 				if (walkingCollider == oldLocation && collided.Count > 0)
 				{
+					// Sliding code
+					bool slided = false;
+					Direction slidingDirection = Direction.Down;
 					switch (this.Direction)
 					{
 						case Direction.Left:
@@ -185,9 +188,17 @@ namespace Lozo
 								if (middleCollision || (topCollided != null && bottomCollided != null))
 									break;
 								if (topCollided != null)
+								{
+									slided = true;
+									slidingDirection = Direction.Down;
 									walkingCollider.Y = Math.Min(walkingCollider.Top + WalkSpeed, topCollided.Value.Bottom);
+								}
 								if (bottomCollided != null)
+								{
+									slided = true;
+									slidingDirection = Direction.Up;
 									walkingCollider.Y = Math.Max(walkingCollider.Bottom - WalkSpeed, bottomCollided.Value.Top) - walkingCollider.Height;
+								}
 								break;
 							}
 						case Direction.Up:
@@ -221,11 +232,48 @@ namespace Lozo
 								if (middleCollision || (leftCollided != null && rightCollided != null))
 									break;
 								if (leftCollided != null)
+								{
+									slided = true;
+									slidingDirection = Direction.Right;
 									walkingCollider.X = Math.Min(walkingCollider.Left + WalkSpeed, leftCollided.Value.Right);
+								}
 								if (rightCollided != null)
+								{
+									slided = true;
+									slidingDirection = Direction.Left;
 									walkingCollider.X = Math.Max(walkingCollider.Right - WalkSpeed, rightCollided.Value.Left) - walkingCollider.Width;
+								}
 								break;
 							}
+					}
+					if (slided)
+					{
+						// If the player slided, then they are moving in a different direction than
+						// the original walking direction, so we need to check collisions again.
+						List<Rectangle> slidingCollided = this.CurrentRoom.CollidingWith(walkingCollider);
+						switch (slidingDirection)
+						{
+							case Direction.Left:
+								foreach (Rectangle c in slidingCollided)
+									walkingCollider.X = Math.Max(walkingCollider.X, c.Right);
+								break;
+							case Direction.Right:
+								int rightX = walkingCollider.Right;
+								foreach (Rectangle c in slidingCollided)
+									rightX = Math.Min(rightX, c.X);
+								walkingCollider.X = rightX - walkingCollider.Width;
+								break;
+							case Direction.Up:
+								foreach (Rectangle c in slidingCollided)
+									walkingCollider.Y = Math.Max(walkingCollider.Y, c.Bottom);
+								break;
+							case Direction.Down:
+								int bottomY = walkingCollider.Bottom;
+								foreach (Rectangle c in slidingCollided)
+									bottomY = Math.Min(bottomY, c.Y);
+								walkingCollider.Y = bottomY - walkingCollider.Height;
+								break;
+						}
 					}
 				}
 				this.UpdateLocationFromWalking(walkingCollider);

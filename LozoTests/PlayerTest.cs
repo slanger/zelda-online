@@ -283,13 +283,13 @@ namespace LozoTests
 			// player should move the full Player.WalkSpeed pixels distance).
 			foreach (int offset in new int[] { 1, Player.WalkSpeed - 1, Player.WalkSpeed })
 			{
-				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left, startingCollider.Bottom + offset, immovableWidth, immovableHeight));
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.X, startingCollider.Bottom + offset, immovableWidth, immovableHeight));
 				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, offset), Direction.Down);
-				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left, startingCollider.Top - immovableHeight - offset, immovableWidth, immovableHeight));
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.X, startingCollider.Top - immovableHeight - offset, immovableWidth, immovableHeight));
 				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, -offset), Direction.Up);
-				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right + offset, startingCollider.Top, immovableWidth, immovableHeight));
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Right + offset, startingCollider.Y, immovableWidth, immovableHeight));
 				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(offset, 0), Direction.Right);
-				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - immovableWidth - offset, startingCollider.Top, immovableWidth, immovableHeight));
+				player = MakeWorldAndPlayer(new Rectangle(startingCollider.Left - immovableWidth - offset, startingCollider.Y, immovableWidth, immovableHeight));
 				MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-offset, 0), Direction.Left);
 			}
 		}
@@ -372,7 +372,224 @@ namespace LozoTests
 			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(-1, 0), Direction.Left);
 		}
 
-		// TODO: Test sliding around corners.
+		[Fact]
+		public void MovementWithSliding()
+		{
+			Player player = MakeWorldAndPlayer();
+			Rectangle startingCollider = player.WalkingCollider();
+
+			// RIGHT
+			// Test sliding with 1 immovable.
+			var immovableA = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 1), Direction.Right);
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, -1), Direction.Right);
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Center.Y, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 0), Direction.Right);
+			// Test sliding with 2 immovables stacked on top of each other. Note that the player
+			// moves just enough pixels to clear the immovables.
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			var immovableB = new Rectangle(startingCollider.Right, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 2), Direction.Right);
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Bottom - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right, startingCollider.Bottom - 2, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, -2), Direction.Right);
+			// Stagger the 2 immovables and test sliding.
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right + 1, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 2), Direction.Right);
+			immovableA = new Rectangle(startingCollider.Right + 1, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 2), Direction.Right);
+			// Test that the player doesn't slide when 2 immovables hit different areas of the
+			// collider.
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Right), Direction.Right);
+			// Test sliding into another immovable.
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right, startingCollider.Top + 1, 1, 1);
+			var immovableStop = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 0), Direction.Right);
+			immovableStop = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 1), Direction.Right);
+			immovableA = new Rectangle(startingCollider.Right, startingCollider.Bottom - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right, startingCollider.Bottom - 2, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, 0), Direction.Right);
+			immovableStop = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 2, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Right), new Point(0, -1), Direction.Right);
+
+			// Do the same tests above, but in the other three directions.
+
+			// LEFT
+			// Test 1 immovable
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 1), Direction.Left);
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, -1), Direction.Left);
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Center.Y, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 0), Direction.Left);
+			// Test 2 immovables stacked
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 2), Direction.Left);
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 2, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, -2), Direction.Left);
+			// Test staggered immovables
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 2, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 2), Direction.Left);
+			immovableA = new Rectangle(startingCollider.Left - 2, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Top + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 2), Direction.Left);
+			// Test separated immovables
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Left), Direction.Left);
+			// Test sliding into another immovable
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Top + 1, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 0), Direction.Left);
+			immovableStop = new Rectangle(startingCollider.Left, startingCollider.Bottom + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 1), Direction.Left);
+			immovableA = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 2, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, 0), Direction.Left);
+			immovableStop = new Rectangle(startingCollider.Left, startingCollider.Top - 2, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Left), new Point(0, -1), Direction.Left);
+
+			// DOWN
+			// Test 1 immovable
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(1, 0), Direction.Down);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(-1, 0), Direction.Down);
+			immovableA = new Rectangle(startingCollider.Center.X, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 0), Direction.Down);
+			// Test 2 immovables stacked
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(2, 0), Direction.Down);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 2, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(-2, 0), Direction.Down);
+			// Test staggered immovables
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Bottom + 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(2, 0), Direction.Down);
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom + 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(2, 0), Direction.Down);
+			// Test separated immovables
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Down), Direction.Down);
+			// Test sliding into another immovable
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Bottom, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Right, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 0), Direction.Down);
+			immovableStop = new Rectangle(startingCollider.Right + 1, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(1, 0), Direction.Down);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Bottom, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 2, startingCollider.Bottom, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Left - 1, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(0, 0), Direction.Down);
+			immovableStop = new Rectangle(startingCollider.Left - 2, startingCollider.Bottom - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Down), new Point(-1, 0), Direction.Down);
+
+			// UP
+			// Test 1 immovable
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(1, 0), Direction.Up);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(-1, 0), Direction.Up);
+			immovableA = new Rectangle(startingCollider.Center.X, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, 0), Direction.Up);
+			// Test 2 immovables stacked
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(2, 0), Direction.Up);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 2, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(-2, 0), Direction.Up);
+			// Test staggered immovables
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Top - 2, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(2, 0), Direction.Up);
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 2, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(2, 0), Direction.Up);
+			// Test separated immovables
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 1, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB);
+			HinderedMoveAndAssert(player, new KeyboardState(Keys.Up), Direction.Up);
+			// Test sliding into another immovable
+			immovableA = new Rectangle(startingCollider.Left, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Left + 1, startingCollider.Top - 1, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Right, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, 0), Direction.Up);
+			immovableStop = new Rectangle(startingCollider.Right + 1, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(1, 0), Direction.Up);
+			immovableA = new Rectangle(startingCollider.Right - 1, startingCollider.Top - 1, 1, 1);
+			immovableB = new Rectangle(startingCollider.Right - 2, startingCollider.Top - 1, 1, 1);
+			immovableStop = new Rectangle(startingCollider.Left - 1, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(0, 0), Direction.Up);
+			immovableStop = new Rectangle(startingCollider.Left - 2, startingCollider.Top, 1, 1);
+			player = MakeWorldAndPlayer(immovableA, immovableB, immovableStop);
+			MoveWithOffsetAndAssert(player, new KeyboardState(Keys.Up), new Point(-1, 0), Direction.Up);
+		}
 
 		// TODO: Test trying to walk while attacking.
 
